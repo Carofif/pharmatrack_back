@@ -15,6 +15,14 @@ module.exports = (sequelize, DataTypes) => {
         through: 'Gardes',
         as: "periodeGardes",
       });
+      this.belongsToMany(models.Assurance, {
+        foreignKey: "pharmacieId",
+        through: 'PharmaAssurances',
+        as: "assurances",
+      });
+      this.hasMany(models.Utilisateur, {
+        foreignKey: 'pharmacieId',
+      });
     }
   }
   Pharmacie.init({
