@@ -12,24 +12,6 @@ const Model = NumeroUrgence;
  */
 const ping = async (req, res) => {
   try {
-    // const periode = await PeriodeGarde.create({
-    //   dateDebut: new Date(),
-    //   dateFin: new Date(),
-    // });
-    // const pharmacie = await Pharmacie.create({
-    //   nom: 'Pharma1',
-    //   nomProprietaire: 'Lino',
-    //   latitude: 15.0,
-    //   longitude: 45.0,
-    //   ouvertToutTemps: false,
-    //   heureOuverture: new Date(),
-    //   heureFermeture: new Date(),
-    //   // quartierId: DataTypes.UUID
-    // });
-    // await Garde.create({
-    //   pharmacieId: pharmacie.id,
-    //   periodeGardeId: periode.id,
-    // });
     const result = await Pharmacie.findOne({
       where: { nom: 'Pharma1' },
       include: [ { model: PeriodeGarde, as: 'periodeGardes' }, ]

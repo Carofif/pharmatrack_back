@@ -121,6 +121,7 @@ const deleteOne = async (req, res) => {
   try {
     const { id } = req.params;
     const model = await Model.findByPk(id);
+
     // mettre après la gestion en déliant les pharmacies qui sont liés ou refuser la suppression
     await model.destroy();
     return res.status(200).send('Assurance supprimé');

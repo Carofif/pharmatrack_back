@@ -1,5 +1,4 @@
 const { NumeroUrgence } = require('../../sequelize/models');
-// const { error: loggingError } = require('../../config/logging');
 const { validationId } = require('./general');
 
 const NAMESPACE = 'NUMERO_URGENCE_VALIDATION';
