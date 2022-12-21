@@ -1,9 +1,9 @@
-const { Arrondissement, Departements } = require('../../sequelize/models');
+const { Pharmacie, Quartier } = require('../../sequelize/models');
 const { error: loggingError } = require('../../config/logging');
 const { validationId } = require('./general');
 
-const NAMESPACE = 'ARRONDISSEMENT_VALIDATION';
-const Model = Arrondissement;
+const NAMESPACE = 'PHARAMCIE_VALIDATION';
+const Model = Pharmacie;
 
 const nom = {
   in: ['params', 'body'],
@@ -12,9 +12,9 @@ const nom = {
   custom: {
     options: async (value) => {
       try {
-        const data = await Arrondissement.findByPk(value);
+        const data = await Pharmacie.findByPk(value);
         if (!data) {
-          return Promise.reject('Cet arrondissement n\'existe pas');
+          return Promise.reject('Cette pharmacie n\'existe pas');
         }
       } catch (e) {
         loggingError(NAMESPACE, e.message, e);
@@ -23,16 +23,16 @@ const nom = {
   },
 };
 
-const departementId = {
+const quartierId = {
   in: ['body'],
   notEmpty: true,
   errorMessage: 'Ce champ est obligatoire',
   custom: {
     options: async (value) => {
       try {
-        const data = await Departements.findByPk(value);
+        const data = await Quartier.findByPk(value);
         if (!data) {
-          return Promise.reject('Ce département n\'existe pas');
+          return Promise.reject('Ce quartier n\'existe pas');
         }
       } catch (e) {
         loggingError(NAMESPACE, e.message, e);
@@ -40,15 +40,34 @@ const departementId = {
     }
   },
 };
-const departementIdIfExist = {
+
+const ouvertToutTemps = {
+  in: ['body'],
+  isBoolean: true,
+  errorMessage: 'Ce champ doit être un booléen',
+};
+
+const latitude = {
+  in: ['body'],
+  notEmpty: true,
+  isLatitude: true,
+  errorMessage: 'La latitude n\'est pas valide',
+};
+const longitude = {
+  in: ['body'],
+  notEmpty: true,
+  isLongitude: true,
+  errorMessage: 'La longitude n\'est pas valide',
+};
+const quartierIdIfExist = {
   in: ['body'],
   custom: {
     options: async (value) => {
       if (!value) return;
       try {
-        const data = await Departements.findByPk(value);
+        const data = await Quartier.findByPk(value);
         if (!data) {
-          return Promise.reject('Ce département n\'existe pas');
+          return Promise.reject('Ce quartier n\'existe pas');
         }
       } catch (e) {
         loggingError(NAMESPACE, e.message, e);
@@ -60,16 +79,19 @@ const departementIdIfExist = {
 module.exports = {
   create: {
     nom,
-    departementId,
+    quartierId,
+    ouvertToutTemps,
+    latitude,
+    longitude,
   },
   update: {
     id: validationId(Model, NAMESPACE),
-    departementId: departementIdIfExist
+    quartierId: quartierIdIfExist,
   },
   getOne: {
     id: validationId(Model, NAMESPACE),
   },
-  getArrondissementByName: {
+  getByName: {
     nom,
   },
   deleteOne: {
