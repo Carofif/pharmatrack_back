@@ -21,7 +21,7 @@ const nomInBody = {
       const nom = value || '';
       try {
         const data = await Model.findOne({ where: { nom } });
-        if (data) return Promise.reject('Cette arrondissement existe déjà');
+        if (data) return Promise.reject('Cet arrondissement existe déjà');
       } catch (e) {
         loggingError(NAMESPACE, e.message, e);
       }

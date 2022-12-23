@@ -1,21 +1,28 @@
 const { Assurance } = require('../../sequelize/models');
 const { error: loggingError } = require('../../config/logging');
-const { validationId } = require('./general');
+const { validationId, pagination } = require('./general');
 
 const NAMESPACE = 'ASSURANCES_VALIDATION';
 const Model = Assurance;
 
-const nom = {
-  in: ['params', 'body'],
+const nomInParams = {
+  in: ['params'],
   notEmpty: true,
+  errorMessage: 'Ce champ est obligatoire',
+};
+
+const nomInBody = {
+  in: ['body'],
+  notEmpty: true,
+  trim: true,
   errorMessage: 'Ce champ est obligatoire',
   custom: {
     options: async (value) => {
+      const nom = value || '';
       try {
-        const data = await Assurance.findByPk(value);
-        if (!data) {
-          return Promise.reject('Cette assurance n\'existe pas');
-        }
+        const data = await Assurance.findOne({ where: { nom } });
+        if (data) return Promise.reject('Cette assurance existe déjà.');
+        return nom;
       } catch (e) {
         loggingError(NAMESPACE, e.message, e);
       }
@@ -24,10 +31,9 @@ const nom = {
 };
 
 
-
 module.exports = {
   create: {
-    nom,
+    nom: nomInBody,
   },
   update: {
     id: validationId(Model, NAMESPACE),
@@ -36,9 +42,12 @@ module.exports = {
     id: validationId(Model, NAMESPACE),
   },
   getByName: {
-    nom,
+    nom: nomInParams,
   },
   deleteOne: {
     id: validationId(Model, NAMESPACE),
+  },
+  getAll: {
+    ...pagination()
   },
 };

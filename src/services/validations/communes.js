@@ -1,21 +1,28 @@
+const { isUUID } = require('validator');
 const { Arrondissement, Commune } = require('../../sequelize/models');
 const { error: loggingError } = require('../../config/logging');
-const { validationId } = require('./general');
+const { validationId, pagination  } = require('./general');
 
 const NAMESPACE = 'COMMUNE_VALIDATION';
 const Model = Commune;
 
-const nom = {
-  in: ['params', 'body'],
+const nomInParams = {
+  in: ['params'],
   notEmpty: true,
+  errorMessage: 'Ce champ est obligatoire',
+};
+
+const nomInBody = {
+  in: ['body'],
+  notEmpty: true,
+  trim: true,
   errorMessage: 'Ce champ est obligatoire',
   custom: {
     options: async (value) => {
+      const nom = value || '';
       try {
-        const data = await Commune.findByPk(value);
-        if (!data) {
-          return Promise.reject('Cette commune n\'existe pas');
-        }
+        const data = await Model.findOne({ where: { nom } });
+        if (data) return Promise.reject('Cette commune existe déjà');
       } catch (e) {
         loggingError(NAMESPACE, e.message, e);
       }
@@ -28,11 +35,12 @@ const arrondissementId = {
   notEmpty: true,
   errorMessage: 'Ce champ est obligatoire',
   custom: {
-    options: async (value) => {
+    options: async (value) => {if (!value) return;
+      if (!isUUID(value, 4)) return Promise.reject('Doit être une UUID');
       try {
         const data = await Arrondissement.findByPk(value);
         if (!data) {
-          return Promise.reject('Ce arrondissement n\'existe pas');
+          return Promise.reject('Cet arrondissement n\'existe pas');
         }
       } catch (e) {
         loggingError(NAMESPACE, e.message, e);
@@ -40,11 +48,13 @@ const arrondissementId = {
     }
   },
 };
+
 const arrondissementIdIfExist = {
   in: ['body'],
   custom: {
     options: async (value) => {
       if (!value) return;
+      if (!isUUID(value, 4)) return Promise.reject('Doit être une UUID');
       try {
         const data = await Arrondissement.findByPk(value);
         if (!data) {
@@ -59,7 +69,7 @@ const arrondissementIdIfExist = {
 
 module.exports = {
   create: {
-    nom,
+    nom: nomInBody,
     arrondissementId,
   },
   update: {
@@ -70,9 +80,12 @@ module.exports = {
     id: validationId(Model, NAMESPACE),
   },
   getCommuneByName: {
-    nom,
+    nom: nomInParams,
   },
   deleteOne: {
     id: validationId(Model, NAMESPACE),
+  },
+  getAll: {
+    ...pagination()
   },
 };

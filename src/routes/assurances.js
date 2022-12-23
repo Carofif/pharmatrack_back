@@ -6,7 +6,7 @@ const schema = require('../services/validations/assurances');
 const router = Router();
 
 router.get('/ping', controller.ping);
-router.get('/', controller.getAll);
+router.get('/', checkSchema(schema.getAll), controller.getAll);
 router.get('/:id', checkSchema(schema.getOne), controller.getOne);
 router.get('/name/:nom', checkSchema(schema.getByName), controller.getByName);
 router.delete('/:id', checkSchema(schema.deleteOne), controller.deleteOne);

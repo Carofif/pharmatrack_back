@@ -1,5 +1,5 @@
 const { NumeroUrgence } = require('../../sequelize/models');
-const { validationId } = require('./general');
+const { validationId, pagination } = require('./general');
 
 const NAMESPACE = 'NUMERO_URGENCE_VALIDATION';
 const Model = NumeroUrgence;
@@ -30,5 +30,8 @@ module.exports = {
   },
   deleteOne: {
     id: validationId(Model, NAMESPACE),
+  },
+  getAll: {
+    ...pagination()
   },
 };

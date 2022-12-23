@@ -6,7 +6,7 @@ const schema = require('../services/validations/numeroUrgences');
 const router = Router();
 
 router.get('/ping', controller.ping);
-router.get('/', controller.getAll);
+router.get('/', checkSchema(schema.getAll), controller.getAll);
 router.get('/:id', checkSchema(schema.getOne), controller.getOne);
 router.delete('/:id', checkSchema(schema.deleteOne), controller.deleteOne);
 router.post('/', checkSchema(schema.create), controller.create);
