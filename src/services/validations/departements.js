@@ -1,21 +1,27 @@
 const { Departements } = require('../../sequelize/models');
 const { error: loggingError } = require('../../config/logging');
-const { validationId } = require('./general');
+const { validationId, pagination } = require('./general');
 
 const NAMESPACE = 'DEPARTEMENTS_VALIDATION';
 const Model = Departements;
 
-const nom = {
-  in: ['params', 'body'],
+const nomInParams = {
+  in: ['params'],
   notEmpty: true,
+  errorMessage: 'Ce champ est obligatoire',
+};
+const nomInBody = {
+  in: ['body'],
+  notEmpty: true,
+  trim: true,
   errorMessage: 'Ce champ est obligatoire',
   custom: {
     options: async (value) => {
+      const nom = value || '';
       try {
-        const data = await Departements.findByPk(value);
-        if (!data) {
-          return Promise.reject('Ce département n\'existe pas');
-        }
+        const data = await Departements.findOne({ where: { nom } });
+        if (data) return Promise.reject('Ce département existe déjà.');
+        return nom;
       } catch (e) {
         loggingError(NAMESPACE, e.message, e);
       }
@@ -23,11 +29,9 @@ const nom = {
   },
 };
 
-
-
 module.exports = {
   create: {
-    nom,
+    nom: nomInBody,
   },
   update: {
     id: validationId(Model, NAMESPACE),
@@ -36,9 +40,12 @@ module.exports = {
     id: validationId(Model, NAMESPACE),
   },
   getDepartementByName: {
-    nom,
+    nom: nomInParams,
   },
   deleteOne: {
     id: validationId(Model, NAMESPACE),
+  },
+  getAll: {
+    ...pagination
   },
 };
