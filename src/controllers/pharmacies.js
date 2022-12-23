@@ -12,6 +12,10 @@ const Model = Pharmacie;
  * @param {Response} res
  */
 const ping = (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
   try {
     return res.status(200).send('ping');
   } catch (error) {
@@ -27,37 +31,41 @@ const ping = (req, res) => {
  * @param {Response} res
  */
 const getAll = async (req, res) => {
-  const { offset, limit, nom, quartierId, longitude, latitude, rayon, ouvertAllTime } = req.query;
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+  const { page, limit, nom, quartierId, longitude, latitude, rayon, ouvertAllTime } = req.query;
   const coordonnesGPS = {
     latitudeMin: latitude - rayon / 1.852 / 60,
     latitudeMax: latitude + rayon / 1.852 / 60,
     longitudeMin: longitude - rayon / 1.852 / 60,
     longitudeMax: longitude + rayon / 1.852 / 60,
   };
-  try {
-    const { count, rows } = await Model.findAndCountAll({
-      offset,
-      limit,
-      where: {
-        nom: {
-          [Op.iLike]: nom,
-        },
-        quartierId: {
-          [Op.eq]: quartierId,
-        },
-        ouvertToutTemps: {
-          [Op.is]: ouvertAllTime,
-        },
-        longitude: {
-          [Op.gt]: coordonnesGPS.longitudeMin,
-          [Op.lt]: coordonnesGPS.longitudeMax,
-        },
-        latitude: {
-          [Op.gt]: coordonnesGPS.latitudeMin,
-          [Op.lt]: coordonnesGPS.latitudeMax,
-        },
+  const payload = {
+    where: {
+      nom: { [Op.iLike]: `%${nom || ''}%` },
+      quartierId: {
+        [Op.eq]: quartierId,
       },
-    });
+      ouvertToutTemps: {
+        [Op.is]: ouvertAllTime,
+      },
+      longitude: {
+        [Op.gt]: coordonnesGPS.longitudeMin,
+        [Op.lt]: coordonnesGPS.longitudeMax,
+      },
+      latitude: {
+        [Op.gt]: coordonnesGPS.latitudeMin,
+        [Op.lt]: coordonnesGPS.latitudeMax,
+      },
+    },
+    order: [['nom', 'ASC']],
+  };
+  if (limit) payload.limit = limit;
+  if (page) payload.offset = (page - 1) * (payload?.limit || 10);
+  try {
+    const { count, rows } = await Model.findAndCountAll(payload);
     return res.status(200).json({ data: rows, count });
   } catch (error) {
     const message = 'Erreur lors de la récupération des pharmacies';
@@ -103,9 +111,7 @@ const getByName = async (req, res) => {
   try {
     const { nom } = req.params;
     const data = await Model.findOne({
-      where: { nom: {
-        [Op.iLike]: nom,
-      } },
+      where: { nom: { [Op.iLike]: `%${nom}%` } },
       include: [
         { model: Quartier, as: 'quartier' },
         { model: PeriodeGarde, as: 'periodeGardes' },
@@ -124,11 +130,6 @@ const create = async (req, res) => {
     return res.status(400).json({ errors: errors.array() });
   }
   try {
-    const { nom } = req.body;
-    const pharma = await Model.findOne({ where: { nom } });
-    if (pharma) {
-      return res.status(400).json({ message: 'Cette pharmacie existe déjà.' });
-    }
     const data = await Pharmacie.create({
       nom: req.body.nom,
       nomProprietaire: req.body.nomProprietaire,
@@ -171,7 +172,8 @@ const update = async (req, res) => {
   }
   try {
     const { id } = req.params;
-    const model = await Model.findByPk(id);
+    const data = await Model.findByPk(id);
+    let count = 0;
     [
       'nom',
       'nomProprietaire',
@@ -182,10 +184,16 @@ const update = async (req, res) => {
       'heureFermeture',
       'quartierId',
     ].forEach(key => {
-      if (req.body[key]) model[key] = req.body[key];
+      if (req.body[key]) {
+        count += 1;
+        data[key] = req.body[key];}
     });
-    const data = await model.save();
-    return res.status(200).send({data, msg: 'Modification effectué avec succès'});
+    let msg = 'Aucun modification effectué';
+    if (count > 0) {
+      await data.save();
+      msg = 'Modification effectué avec succès';
+    }
+    return res.status(200).send({data, msg});
   } catch (error) {
     const message = 'Erreur lors de la mise à jour d\'une pharmacie.';
     loggingError(NAMESPACE, message, error);

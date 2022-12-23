@@ -1,21 +1,28 @@
+const { isUUID } = require('validator');
 const { Pharmacie, Quartier } = require('../../sequelize/models');
 const { error: loggingError } = require('../../config/logging');
-const { validationId } = require('./general');
+const { validationId, pagination } = require('./general');
 
 const NAMESPACE = 'PHARAMCIE_VALIDATION';
 const Model = Pharmacie;
 
-const nom = {
-  in: ['params', 'body'],
+const nomInParams = {
+  in: ['params'],
   notEmpty: true,
+  errorMessage: 'Ce champ est obligatoire',
+};
+
+const nomInBody = {
+  in: ['body'],
+  notEmpty: true,
+  trim: true,
   errorMessage: 'Ce champ est obligatoire',
   custom: {
     options: async (value) => {
+      const nom = value || '';
       try {
-        const data = await Pharmacie.findByPk(value);
-        if (!data) {
-          return Promise.reject('Cette pharmacie n\'existe pas');
-        }
+        const data = await Model.findOne({ where: { nom } });
+        if (data) return Promise.reject('Cette pharmacie existe déjà');
       } catch (e) {
         loggingError(NAMESPACE, e.message, e);
       }
@@ -29,6 +36,8 @@ const quartierId = {
   errorMessage: 'Ce champ est obligatoire',
   custom: {
     options: async (value) => {
+      if (!value) return;
+      if (!isUUID(value, 4)) return Promise.reject('Doit être une UUID');
       try {
         const data = await Quartier.findByPk(value);
         if (!data) {
@@ -53,17 +62,20 @@ const latitude = {
   isLatitude: true,
   errorMessage: 'La latitude n\'est pas valide',
 };
+
 const longitude = {
   in: ['body'],
   notEmpty: true,
   isLongitude: true,
   errorMessage: 'La longitude n\'est pas valide',
 };
+
 const quartierIdIfExist = {
   in: ['body'],
   custom: {
     options: async (value) => {
       if (!value) return;
+      if (!isUUID(value, 4)) return Promise.reject('Doit être une UUID');
       try {
         const data = await Quartier.findByPk(value);
         if (!data) {
@@ -78,7 +90,7 @@ const quartierIdIfExist = {
 
 module.exports = {
   create: {
-    nom,
+    nom: nomInBody,
     quartierId,
     ouvertToutTemps,
     latitude,
@@ -92,9 +104,12 @@ module.exports = {
     id: validationId(Model, NAMESPACE),
   },
   getByName: {
-    nom,
+    nom: nomInParams,
   },
   deleteOne: {
     id: validationId(Model, NAMESPACE),
+  },
+  getAll: {
+    ...pagination()
   },
 };
