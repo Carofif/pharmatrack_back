@@ -20,25 +20,27 @@ const validationId = (model, namespace) => {
   };
 };
 
-const pagination = {
-  page: {
-    in: ['query'],
-    isInt: {
-      if: value => !!value,
-      options: { min: 1 },
-      errorMessage: 'Cette valeur doit être un nombre supérieur à 0 si elle existe',
+const pagination = () => {
+  return {
+    page: {
+      in: ['query'],
+      isInt: {
+        if: value => !!value,
+        options: { min: 1 },
+        errorMessage: 'Cette valeur doit être un nombre supérieur à 0 si elle existe',
+      },
+      toInt: true,
     },
-    toInt: true,
-  },
-  limit: {
-    in: ['query'],
-    isInt: {
-      if: value => !!value,
-      options: { min: 1 },
-      errorMessage: 'Cette valeur doit être un nombre supérieur à 0 si elle existe',
+    limit: {
+      in: ['query'],
+      isInt: {
+        if: value => !!value,
+        options: { min: 1 },
+        errorMessage: 'Cette valeur doit être un nombre supérieur à 0 si elle existe',
+      },
+      toInt: true,
     },
-    toInt: true,
-  },
+  };
 };
 
 module.exports = {

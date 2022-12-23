@@ -1,21 +1,27 @@
+const { isUUID } = require('validator');
 const { Arrondissement, Departements } = require('../../sequelize/models');
 const { error: loggingError } = require('../../config/logging');
-const { validationId } = require('./general');
+const { validationId, pagination } = require('./general');
 
 const NAMESPACE = 'ARRONDISSEMENT_VALIDATION';
 const Model = Arrondissement;
 
-const nom = {
-  in: ['params', 'body'],
+const nomInParams = {
+  in: ['params'],
   notEmpty: true,
+  errorMessage: 'Ce champ est obligatoire',
+};
+const nomInBody = {
+  in: ['body'],
+  notEmpty: true,
+  trim: true,
   errorMessage: 'Ce champ est obligatoire',
   custom: {
     options: async (value) => {
+      const nom = value || '';
       try {
-        const data = await Departements.findByPk(value);
-        if (!data) {
-          return Promise.reject('Ce département n\'existe pas');
-        }
+        const data = await Model.findOne({ where: { nom } });
+        if (data) return Promise.reject('Cette arrondissement existe déjà');
       } catch (e) {
         loggingError(NAMESPACE, e.message, e);
       }
@@ -29,6 +35,8 @@ const departementId = {
   errorMessage: 'Ce champ est obligatoire',
   custom: {
     options: async (value) => {
+      if (!value) return;
+      if (!isUUID(value, 4)) return Promise.reject('Doit être une UUID');
       try {
         const data = await Departements.findByPk(value);
         if (!data) {
@@ -45,6 +53,7 @@ const departementIdIfExist = {
   custom: {
     options: async (value) => {
       if (!value) return;
+      if (!isUUID(value, 4)) return Promise.reject('Doit être une UUID');
       try {
         const data = await Departements.findByPk(value);
         if (!data) {
@@ -59,7 +68,7 @@ const departementIdIfExist = {
 
 module.exports = {
   create: {
-    nom,
+    nom: nomInBody,
     departementId,
   },
   update: {
@@ -70,9 +79,12 @@ module.exports = {
     id: validationId(Model, NAMESPACE),
   },
   getArrondissementByName: {
-    nom,
+    nom: nomInParams,
   },
   deleteOne: {
     id: validationId(Model, NAMESPACE),
+  },
+  getAll: {
+    ...pagination()
   },
 };
