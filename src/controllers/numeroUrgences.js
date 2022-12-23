@@ -31,13 +31,19 @@ const ping = async (req, res) => {
  * @param {Response} res
  */
 const getAll = async (req, res) => {
-  const { offset, limit } = req.query;
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+  const { page, limit } = req.query;
+  const payoad = {
+    where: {
+    },
+  };
+  if (limit) payoad.limit = limit;
+  if (page) payoad.offset = (page - 1) * (payoad?.limit || 10);
   try {
-    const { count, rows } = await Model.findAndCountAll({
-      offset,
-      limit,
-      where: {},
-    });
+    const { count, rows } = await Model.findAndCountAll(payoad);
     return res.status(200).json({ data: rows, count });
   } catch (error) {
     const message = 'Erreur lors de la récupération des numéros d\'urgences';
@@ -113,7 +119,8 @@ const update = async (req, res) => {
   }
   try {
     const { id } = req.params;
-    const model = await Model.findByPk(id);
+    const data = await Model.findByPk(id);
+    let count = 0;
     [
       'nom',
       'description',
@@ -122,10 +129,17 @@ const update = async (req, res) => {
       'telephone',
       'telephones',
     ].forEach(key => {
-      if (req.body[key]) model[key] = req.body[key];
+      if (req.body[key]) {
+        count += 1;
+        data[key] = req.body[key];
+      }
     });
-    const data = await model.save();
-    return res.status(200).send({data, msg: 'Modification effectué avec succès'});
+    let msg = 'Aucun modification effectué';
+    if (count > 0) {
+      await data.save();
+      msg = 'Modification effectué avec succès';
+    }
+    return res.status(200).send({data, msg});
   } catch (error) {
     const message = 'Erreur lors de la mise à jour d\'un numéro d\'urgence';
     loggingError(NAMESPACE, message, error);

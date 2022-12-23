@@ -12,6 +12,10 @@ const Model = Commune;
  * @param {Response} res
  */
 const ping = (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
   try {
     return res.status(200).send('ping');
   } catch (error) {
@@ -27,17 +31,21 @@ const ping = (req, res) => {
  * @param {Response} res
  */
 const getAll = async (req, res) => {
-  const { offset, limit, nom } = req.query;
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+  const { page, limit, nom } = req.query;
+  const payoad = {
+    where: {
+      nom: { [Op.iLike]: `%${nom || ''}%` },
+    },
+    order: [['nom', 'ASC']],
+  };
+  if (limit) payoad.limit = limit;
+  if (page) payoad.offset = (page - 1) * (payoad?.limit || 10);
   try {
-    const { count, rows } = await Model.findAndCountAll({
-      offset,
-      limit,
-      where: {
-        nom: {
-          [Op.iLike]: nom,
-        }
-      },
-    });
+    const { count, rows } = await Model.findAndCountAll(payoad);
     return res.status(200).json({ data: rows, count });
   } catch (error) {
     const message = 'Erreur lors de la récupération des communes';
@@ -80,9 +88,7 @@ const getCommuneByName = async (req, res) => {
   try {
     const { nom } = req.params;
     const data = await Model.findOne({
-      where: { nom: {
-        [Op.iLike]: nom,
-      } },
+      where: { nom: { [Op.iLike]: `%${nom}%` } },
       include: Quartier });
     return res.status(200).json(data);
   } catch (error) {
@@ -98,11 +104,6 @@ const create = async (req, res) => {
     return res.status(400).json({ errors: errors.array() });
   }
   try {
-    const { nom, arrondissementId } = req.body;
-    const arrondissement = await Model.findOne({ where: { nom, arrondissementId } });
-    if (arrondissement) {
-      return res.status(400).json({ message: 'Cette commune existe déjà avec cet arrondissement.' });
-    }
     const data = await Model.create({
       nom: req.body.nom,
       arrondissementId: req.body.arrondissementId,
@@ -142,15 +143,23 @@ const update = async (req, res) => {
   }
   try {
     const { id } = req.params;
-    const model = await Model.findByPk(id);
+    const data = await Model.findByPk(id);
+    let count = 0;
     [
       'nom',
       'arrondissementId',
     ].forEach(key => {
-      if (req.body[key]) model[key] = req.body[key];
+      if (req.body[key]) {
+        count += 1;
+        data[key] = req.body[key];
+      }
     });
-    const data = await model.save();
-    return res.status(200).send({data, msg: 'Modification effectué avec succès'});
+    let msg = 'Aucun modification effectué';
+    if (count > 0) {
+      await data.save();
+      msg = 'Modification effectué avec succès';
+    }
+    return res.status(200).send({data, msg});
   } catch (error) {
     const message = 'Erreur lors de la mise à jour d\'une commune.';
     loggingError(NAMESPACE, message, error);
