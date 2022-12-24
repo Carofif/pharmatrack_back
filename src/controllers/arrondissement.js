@@ -66,7 +66,10 @@ const getOne = async (req, res) => {
   }
   try {
     const { id } = req.params;
-    const data = await Model.findOne({ where: { id }, include: Commune });
+    const data = await Model.findOne({
+      where: { id },
+      include: [{ model: Commune, as: 'communes' }],
+    });
     return res.status(200).json(data);
   } catch (error) {
     const message = 'Erreur lors de la récupération d\'un arrondissement';
@@ -80,7 +83,7 @@ const getOne = async (req, res) => {
  * @param {Request} req
  * @param {Response} res
  */
-const getArrondissementByName = async (req, res) => {
+const getByName = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
@@ -89,7 +92,7 @@ const getArrondissementByName = async (req, res) => {
     const { nom } = req.params;
     const data = await Model.findOne({
       where: { nom: { [Op.iLike]: `%${nom}%` } },
-      include: Commune,
+      include: [{ model: Commune, as: 'communes' }],
     });
     return res.status(200).json(data);
   } catch (error) {
@@ -124,7 +127,10 @@ const deleteOne = async (req, res) => {
   }
   try {
     const { id } = req.params;
-    const model = await Model.findOne({ where: { id }, include: [{model: Commune, as: 'communes'}] });
+    const model = await Model.findOne({
+      where: { id },
+      include: [{ model: Commune, as: 'communes' }],
+    });
     if (model.communes && Array.isArray(model.communes) && model.communes.length > 0) {
       return res.status(400).send('Cet arrondissement ne peut pas être supprimer car il est lié à des communes');
     }
@@ -172,7 +178,7 @@ module.exports = {
   ping,
   getAll,
   getOne,
-  getArrondissementByName,
+  getByName,
   create,
   deleteOne,
   update,

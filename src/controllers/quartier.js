@@ -80,7 +80,7 @@ const getOne = async (req, res) => {
  * @param {Request} req
  * @param {Response} res
  */
-const getQuartierByName = async (req, res) => {
+const getByName = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
@@ -168,7 +168,7 @@ module.exports = {
   ping,
   getAll,
   getOne,
-  getQuartierByName,
+  getByName,
   create,
   deleteOne,
   update,

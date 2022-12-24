@@ -27,16 +27,16 @@ const pagination = () => {
       isInt: {
         if: value => !!value,
         options: { min: 1 },
-        errorMessage: 'Cette valeur doit être un nombre supérieur à 0 si elle existe',
+        errorMessage: 'La page doit être un nombre supérieur à 0 si elle existe',
       },
       toInt: true,
     },
     limit: {
       in: ['query'],
       isInt: {
-        if: value => !!value,
+        if: (value, { req }) => !!value || !!req.query.page,
         options: { min: 1 },
-        errorMessage: 'Cette valeur doit être un nombre supérieur à 0 si elle existe',
+        errorMessage: 'La limite doit être un nombre supérieur à 0 si elle existe ou si la page est renseignée',
       },
       toInt: true,
     },

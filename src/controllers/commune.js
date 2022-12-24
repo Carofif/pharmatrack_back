@@ -66,7 +66,10 @@ const getOne = async (req, res) => {
   }
   try {
     const { id } = req.params;
-    const data = await Model.findOne({ where: { id }, include: Quartier });
+    const data = await Model.findOne({
+      where: { id },
+      include: [{ model: Quartier, as: 'quartiers' }],
+    });
     return res.status(200).json(data);
   } catch (error) {
     const message = 'Erreur lors de la récupération d\'une commune';
@@ -80,7 +83,7 @@ const getOne = async (req, res) => {
  * @param {Request} req
  * @param {Response} res
  */
-const getCommuneByName = async (req, res) => {
+const getByName = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
@@ -89,7 +92,8 @@ const getCommuneByName = async (req, res) => {
     const { nom } = req.params;
     const data = await Model.findOne({
       where: { nom: { [Op.iLike]: `%${nom}%` } },
-      include: Quartier });
+      include: [{ model: Quartier, as: 'quartiers' }],
+    });
     return res.status(200).json(data);
   } catch (error) {
     const message = 'Erreur lors de la récupération d\'une commune';
@@ -123,8 +127,11 @@ const deleteOne = async (req, res) => {
   }
   try {
     const { id } = req.params;
-    const model = await Model.findOne({ where: { id }, include: [{model: Quartier, as: 'quartiers'}] });
-    if (model.Quartier && Array.isArray(model.quartiers) && model.quartiers.length > 0) {
+    const model = await Model.findOne({
+      where: { id },
+      include: [{ model: Quartier, as: 'quartiers' }],
+    });
+    if (model.quartiers && Array.isArray(model.quartiers) && model.quartiers.length > 0) {
       return res.status(400).send('Cette commune ne peut pas être supprimer car il est lié à des quartiers');
     }
     else await model.destroy();
@@ -171,7 +178,7 @@ module.exports = {
   ping,
   getAll,
   getOne,
-  getCommuneByName,
+  getByName,
   create,
   deleteOne,
   update,

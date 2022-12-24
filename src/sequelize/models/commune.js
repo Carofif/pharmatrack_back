@@ -12,6 +12,7 @@ module.exports = (sequelize, DataTypes) => {
       });
       this.hasMany(models.Quartier, {
         foreignKey: 'communeId',
+        as: 'quartiers',
       });
     }
   }
