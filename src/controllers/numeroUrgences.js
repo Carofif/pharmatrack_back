@@ -1,6 +1,7 @@
-const { error: loggingError } = require('../config/logging');
+const { Op } = require('sequelize');
 const { validationResult } = require('express-validator');
-const { NumeroUrgence, PeriodeGarde, Pharmacie/* , Garde */ } = require('../sequelize/models');
+const { error: loggingError } = require('../config/logging');
+const { NumeroUrgence } = require('../sequelize/models');
 
 const NAMESPACE = 'NUMERO_URGENCE_CONTROLLER';
 const Model = NumeroUrgence;
@@ -10,15 +11,14 @@ const Model = NumeroUrgence;
  * @param {Request} req
  * @param {Response} res
  */
-const ping = async (req, res) => {
+const ping = (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
   try {
-    const result = await Pharmacie.findOne({
-      where: { nom: 'Pharma1' },
-      include: [ { model: PeriodeGarde, as: 'periodeGardes' }, ]
-    });
-    return res.status(200).send(result);
+    return res.status(200).send('ping');
   } catch (error) {
-    loggingError(NAMESPACE, '', error);
     return res.status(400).send({
       message: error.message,
     });
@@ -35,9 +35,10 @@ const getAll = async (req, res) => {
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
   }
-  const { page, limit } = req.query;
+  const { page, limit, nom } = req.query;
   const payoad = {
     where: {
+      nom: { [Op.iLike]: `%${nom || ''}%` },
     },
   };
   if (limit) payoad.limit = limit;

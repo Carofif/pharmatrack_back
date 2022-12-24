@@ -1,7 +1,7 @@
-const { error: loggingError } = require('../config/logging');
-const { validationResult } = require('express-validator');
-const { Arrondissement, Commune } = require('../sequelize/models');
 const { Op } = require('sequelize');
+const { validationResult } = require('express-validator');
+const { error: loggingError } = require('../config/logging');
+const { Arrondissement, Commune } = require('../sequelize/models');
 
 const NAMESPACE = 'ARRONDISSEMENT_CONTROLLER';
 const Model = Arrondissement;

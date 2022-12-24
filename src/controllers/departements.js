@@ -1,7 +1,7 @@
-const { error: loggingError } = require('../config/logging');
-const { validationResult } = require('express-validator');
-const { Departements, Arrondissement } = require('../sequelize/models');
 const { Op } = require('sequelize');
+const { validationResult } = require('express-validator');
+const { error: loggingError } = require('../config/logging');
+const { Departements, Arrondissement } = require('../sequelize/models');
 
 const NAMESPACE = 'DEPARTEMENT_CONTROLLER';
 const Model = Departements;

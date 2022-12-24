@@ -1,7 +1,7 @@
-const { error: loggingError } = require('../config/logging');
-const { validationResult } = require('express-validator');
-const { Quartier } = require('../sequelize/models');
 const { Op } = require('sequelize');
+const { validationResult } = require('express-validator');
+const { error: loggingError } = require('../config/logging');
+const { Quartier } = require('../sequelize/models');
 
 const NAMESPACE = 'COMMUNE_CONTROLLER';
 const Model = Quartier;
