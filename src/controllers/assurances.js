@@ -1,5 +1,5 @@
 const { error: loggingError } = require('../config/logging');
-const { Assurance } = require('../sequelize/models');
+const { Assurance, PharmaAssurance } = require('../sequelize/models');
 const { Op } = require('sequelize');
 
 const NAMESPACE = 'ASSURANCE_CONTROLLER';
@@ -68,10 +68,14 @@ const getByName = async (req, res) => {
 
 const create = async (req, res) => {
   try {
-    // TODO: mettre après la gestion en liant les pharmacies
-    const data = await Model.create({
-      nom: req.body.nom,
-    });
+    const { nom, pharmacieId } = req.body;
+    const data = await Model.create({ nom });
+    if (pharmacieId) {
+      await PharmaAssurance.create({
+        assuranceId: data.id,
+        pharmacieId,
+      });
+    }
     return res.status(201).send({ data });
   } catch (error) {
     const message = 'Erreur lors de la création d\'une assurance';
@@ -110,6 +114,15 @@ const update = async (req, res) => {
     let msg = 'Aucun modification effectué';
     if (count > 0) {
       await data.save();
+      msg = 'Modification effectué avec succès';
+    }
+    if (req.body.pharmacieId) {
+      const where = {
+        assuranceId: id,
+        pharmacieId: req.body.pharmacieId,
+      };
+      const link = await PharmaAssurance.findOne({where});
+      if (!link) await PharmaAssurance.create(where);
       msg = 'Modification effectué avec succès';
     }
     return res.status(200).send({data, msg});

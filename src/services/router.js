@@ -3,7 +3,6 @@ const { Router } = require('express');
 const { checkSchema } = require('express-validator');
 const { checkValidation } = require('./validations/general');
 
-const router = Router();
 
 const ping = (req, res) => {
   try {
@@ -15,9 +14,10 @@ const ping = (req, res) => {
   }
 };
 
-router.get('/ping', checkValidation, ping);
 
 const poweringRoute = (schema, controller, list) => {
+  const router = Router();
+  router.get('/ping', checkValidation, ping);
   list.forEach(([method, path, name, ...other]) => {
     router[method](
       path, ...other,

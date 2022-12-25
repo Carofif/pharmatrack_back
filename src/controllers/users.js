@@ -1,6 +1,6 @@
 const { Op } = require("sequelize");
 const { roles } = require('../config/user');
-const { User } = require('../sequelize/models');
+const { Utilisateur } = require('../sequelize/models');
 const { hashMdp } = require('../services/user');
 const { error: loggingError } = require('../config/logging');
 
@@ -8,14 +8,15 @@ const NAMESPACE = 'USER_CONTROLLER';
 
 const create = async (req, res) => {
   try {
-    await User.create({
-      nom: req.body.nom,
-      prenoms: req.body.prenoms,
-      sexe: req.body.sexe,
-      telephone: req.body.telephone,
+    await Utilisateur.create({
+      nom: req.body?.nom || null,
+      prenoms: req.body?.prenoms || null,
+      sexe: req.body?.sexe || null,
+      telephone: req.body?.telephone || null,
       email: req.body.email,
-      motDePasse: hashMdp(req.body.mdp),
+      motDePasse: hashMdp(req.body.motDePasse),
       role: req.body.role,
+      pharmacieId: req.body?.pharmacieId || null,
     });
     return res.status(201).send('Utilisateur crée');
   } catch (error) {
@@ -45,7 +46,7 @@ const getAll = async (req, res) => {
   if (limit) payoad.limit = limit;
   if (page) payoad.offset = (page - 1) * (payoad?.limit || 10);
   try {
-    const { count, rows } = await User.findAndCountAll(payoad);
+    const { count, rows } = await Utilisateur.findAndCountAll(payoad);
     return res.status(200).json({
       data: rows,
       count
@@ -59,10 +60,10 @@ const getAll = async (req, res) => {
 };
 
 const getOne = async (req, res) => {
-  const { id } = req.params;
+  const { userId } = req.params;
   try {
-    const user = await User.findByPk(id);
-    delete user.dataValues.mdp;
+    const user = await Utilisateur.findByPk(userId);
+    delete user.dataValues.motDePasse;
     return res.status(200).json(user);
   } catch (error) {
     loggingError(NAMESPACE, 'Erreur lors de la récupération d\'un utilisateurs', error);
@@ -73,9 +74,9 @@ const getOne = async (req, res) => {
 };
 
 const deleteOne = async (req, res) => {
-  const { id } = req.params;
+  const { userId } = req.params;
   try {
-    const user = await User.findByPk(id);
+    const user = await Utilisateur.findByPk(userId);
     await user.destroy();
     return res.status(200).send('Utilisateur supprimé');
   } catch (error) {
@@ -87,16 +88,18 @@ const deleteOne = async (req, res) => {
 };
 
 const update = async (req, res) => {
-  const { id } = req.params;
+  const { userId } = req.params;
   try {
-    const user = await User.findByPk(id);
+    const user = await Utilisateur.findByPk(userId);
     let count = 0;
     [
       'nom',
       'prenoms',
-      'email',
-      'telephone',
       'sexe',
+      'telephone',
+      'email',
+      'role',
+      'pharmacieId',
     ].forEach(key => {
       if (req.body[key]) {
         count += 1;
@@ -108,6 +111,7 @@ const update = async (req, res) => {
       await user.save();
       msg = 'Modification effectué avec succès';
     }
+    delete user.dataValues.motDePasse;
     return res.status(200).send({user, msg});
   } catch (error) {
     loggingError(NAMESPACE, 'Erreur lors de la mise à jour d\'un utilisateur', error);

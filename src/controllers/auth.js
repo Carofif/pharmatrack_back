@@ -1,28 +1,11 @@
-const { User } = require('../sequelize/models');
-const { compareMdp, hashMdp } = require('../services/user');
+const { Utilisateur } = require('../sequelize/models');
+const { hashMdp } = require('../services/user');
 const { generateUserToken } = require('../services/auth');
 
-const login = async (req, res) => {
-  const {
-    email,
-    mdp
-  } = req.body;
+const login = (req, res) => {
+  const { email } = req.body;
   try {
-    const user = await User.findOne({ where: { email } });
-    if (!user) {
-      return res.status(400).send({
-        status: 'bad',
-        message: 'Cet utilisateur n\'existe pas',
-        name: 'NoUser'
-      });
-    }
-    if (!compareMdp(mdp, user.mdp)) {
-      return res.status(400).send({
-        status: 'bad',
-        message: 'Mot de passe incorrect',
-        name: 'BadCompare'
-      });
-    }
+    const user = req.model;
     const token = generateUserToken({
       email,
       id: user.id,
@@ -46,9 +29,9 @@ const checkToken = (req, res) => {
 
 const changeMdp = async (req, res) => {
   try {
-    const { id } = req.params;
-    const user = await User.findByPk(id);
-    user.mdp = hashMdp(req.body.mdpNouveau);
+    const { userId } = req.params;
+    const user = await Utilisateur.findByPk(userId);
+    user.motDePasse = hashMdp(req.body.mdpNouveau);
     await user.save();
     return res.status(200).send('Mot de passe mise à jour');
   } catch (error) {
