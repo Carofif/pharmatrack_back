@@ -1,15 +1,11 @@
-const { Router } = require('express');
-const { checkSchema } = require('express-validator');
 const controller = require('../controllers/numeroUrgences');
 const schema = require('../services/validations/numeroUrgences');
+const { poweringRoute } = require('../services/router');
 
-const router = Router();
-
-router.get('/ping', controller.ping);
-router.get('/', checkSchema(schema.getAll), controller.getAll);
-router.get('/:id', checkSchema(schema.getOne), controller.getOne);
-router.delete('/:id', checkSchema(schema.deleteOne), controller.deleteOne);
-router.post('/', checkSchema(schema.create), controller.create);
-router.put('/:id', checkSchema(schema.update), controller.update);
-
-module.exports = router;
+module.exports = poweringRoute(schema, controller, [
+  ['get',     '/',      'getAll'    ],
+  ['post',    '/',      'create'    ],
+  ['get',     '/:id',   'getOne'    ],
+  ['delete',  '/:id',   'deleteOne' ],
+  ['put',     '/:id',   'update'    ],
+]);

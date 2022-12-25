@@ -89,6 +89,6 @@ module.exports = {
     id: validationId(Model, NAMESPACE),
   },
   getAll: {
-    ...pagination()
+    ...pagination(),
   },
 };

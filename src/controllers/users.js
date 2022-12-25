@@ -1,31 +1,12 @@
-const { validationResult } = require('express-validator');
 const { Op } = require("sequelize");
-const configUser = require('../config/user');
+const { roles } = require('../config/user');
 const { User } = require('../sequelize/models');
 const { hashMdp } = require('../services/user');
 const { error: loggingError } = require('../config/logging');
 
 const NAMESPACE = 'USER_CONTROLLER';
 
-const ping = (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-  try {
-    return res.status(200).send('ping');
-  } catch (error) {
-    return res.status(400).send({
-      message: error.message,
-    });
-  }
-};
-
 const create = async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
   try {
     await User.create({
       nom: req.body.nom,
@@ -46,20 +27,16 @@ const create = async (req, res) => {
 };
 
 const getAll = async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
+  const allRoles = [roles.aucun, roles.pharmacien, roles.employe, roles.administrateur];
+  if (req.user.role === roles.pharmacien) {
+    allRoles.splice(0, 1);
   }
   const { page, limit, nom } = req.query;
-  const roles = [configUser.roles.aucun, configUser.roles.pharmacien, configUser.roles.employe, configUser.roles.administrateur];
-  if (req.user.role === configUser.roles.pharmacien) {
-    roles.splice(0, 1);
-  }
   const payoad = {
     attributes: ['id', 'nom', 'prenoms', 'email', 'role', 'sexe', 'telephone'],
     where: {
       role: {
-        [Op.or]: roles
+        [Op.or]: allRoles
       },
       nom: { [Op.iLike]: `%${nom || ''}%` },
     },
@@ -82,9 +59,9 @@ const getAll = async (req, res) => {
 };
 
 const getOne = async (req, res) => {
-  const { userId } = req.params;
+  const { id } = req.params;
   try {
-    const user = await User.findByPk(userId);
+    const user = await User.findByPk(id);
     delete user.dataValues.mdp;
     return res.status(200).json(user);
   } catch (error) {
@@ -96,9 +73,9 @@ const getOne = async (req, res) => {
 };
 
 const deleteOne = async (req, res) => {
-  const { userId } = req.params;
+  const { id } = req.params;
   try {
-    const user = await User.findByPk(userId);
+    const user = await User.findByPk(id);
     await user.destroy();
     return res.status(200).send('Utilisateur supprimé');
   } catch (error) {
@@ -110,9 +87,9 @@ const deleteOne = async (req, res) => {
 };
 
 const update = async (req, res) => {
-  const { userId } = req.params;
+  const { id } = req.params;
   try {
-    const user = await User.findByPk(userId);
+    const user = await User.findByPk(id);
     let count = 0;
     [
       'nom',
@@ -145,6 +122,5 @@ module.exports = {
   getAll,
   getOne,
   deleteOne,
-  ping,
   update,
 };

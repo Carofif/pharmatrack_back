@@ -1,13 +1,8 @@
-const { validationResult } = require('express-validator');
 const { User } = require('../sequelize/models');
 const { compareMdp, hashMdp } = require('../services/user');
 const { generateUserToken } = require('../services/auth');
 
 const login = async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
   const {
     email,
     mdp
@@ -50,12 +45,9 @@ const checkToken = (req, res) => {
 };
 
 const changeMdp = async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
   try {
-    const user = await User.findByPk(req.params.userId);
+    const { id } = req.params;
+    const user = await User.findByPk(id);
     user.mdp = hashMdp(req.body.mdpNouveau);
     await user.save();
     return res.status(200).send('Mot de passe mise à jour');
