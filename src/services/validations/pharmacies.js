@@ -14,9 +14,6 @@ const nomInParams = {
 
 const nomInBody = {
   in: ['body'],
-  notEmpty: true,
-  trim: true,
-  errorMessage: 'Ce champ est obligatoire',
   custom: {
     options: async (value) => {
       const nom = value || '';
@@ -90,7 +87,12 @@ const quartierIdIfExist = {
 
 module.exports = {
   create: {
-    nom: nomInBody,
+    nom: {
+      ...nomInBody,
+      notEmpty: true,
+      trim: true,
+      errorMessage: 'Ce champ est obligatoire',
+    },
     quartierId,
     ouvertToutTemps,
     latitude,
@@ -98,6 +100,7 @@ module.exports = {
   },
   update: {
     id: validationId(Model, NAMESPACE),
+    nom: nomInBody,
     quartierId: quartierIdIfExist,
   },
   getOne: {
@@ -110,6 +113,6 @@ module.exports = {
     id: validationId(Model, NAMESPACE),
   },
   getAll: {
-    ...pagination()
+    ...pagination(),
   },
 };
