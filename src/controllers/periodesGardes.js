@@ -120,23 +120,29 @@ const update = async (req, res) => {
   }
 };
 
-// const createAll = async (req, res) => {
-//   try {
-//     const { periodesGardes } = req.body;
-//     // const data = await Model.create({ dateDebut, dateFin });
-//     // if (pharmacieId) {
-//     //   await Garde.create({
-//     //     periodeGardeId: data.id,
-//     //     pharmacieId,
-//     //   });
-//     // }
-//     return res.status(201).send({ periodesGardes });
-//   } catch (error) {
-//     const message = 'Erreur lors de la création multiple des périodes de garde';
-//     loggingError(NAMESPACE, message, error);
-//     return res.status(400).send({message});
-//   }
-// };
+const createAll = async (req, res) => {
+  try {
+    const { periodesGardes } = req.body;
+    const pharmaciesIds = periodesGardes.map(p => p.pharamcieId);
+    const dataToCreate = periodesGardes.forEach((p) => delete p.pharmacieId);
+    const data = await Model.bulkCreate({ dataToCreate });
+    if (pharmaciesIds.length > 0) {
+      const lienGardes = [];
+      pharmaciesIds.forEach((el, index) => {
+        lienGardes.push({
+          periodeGardeId: data[index].id,
+          pharmacieId : el,
+        });
+      });
+      await Garde.bulkCreate({ lienGardes });
+    }
+    return res.status(200).send({ data });
+  } catch (error) {
+    const message = 'Erreur lors de la création multiple des périodes de garde';
+    loggingError(NAMESPACE, message, error);
+    return res.status(400).send({message});
+  }
+};
 
 module.exports = {
   getAll,
@@ -144,5 +150,5 @@ module.exports = {
   create,
   deleteOne,
   update,
-  // createAll,
+  createAll,
 };

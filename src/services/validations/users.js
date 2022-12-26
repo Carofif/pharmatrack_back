@@ -7,7 +7,6 @@ const { validationId, pagination } = require('./general');
 
 const NAMESPACE = 'USER_VALIDATION';
 const Model = Utilisateur;
-// const ROLES = [roles.aucun, roles.pharmacien, roles.employe, roles.administrateur];
 const ROLES = Object.values(roles);
 
 const email = {

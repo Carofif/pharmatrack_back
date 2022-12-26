@@ -55,16 +55,20 @@ const ouvertToutTemps = {
 
 const latitude = {
   in: ['body'],
-  notEmpty: true,
-  isLatitude: true,
-  errorMessage: 'La latitude n\'est pas valide',
+  isFloat: true,
+  errorMessage: 'La latitude doit être un nombre à virgule',
 };
 
 const longitude = {
   in: ['body'],
-  notEmpty: true,
-  isLongitude: true,
-  errorMessage: 'La longitude n\'est pas valide',
+  isFloat: true,
+  errorMessage: 'La longitude doit être un nombre à virgule',
+};
+
+const latLong = {
+  in: ['body'],
+  isLatLong: true,
+  errorMessage: 'La latitude ou la longitude invalide',
 };
 
 const quartierIdIfExist = {
@@ -97,6 +101,7 @@ module.exports = {
     ouvertToutTemps,
     latitude,
     longitude,
+    latLong
   },
   update: {
     id: validationId(Model, NAMESPACE),
@@ -114,5 +119,6 @@ module.exports = {
   },
   getAll: {
     ...pagination(),
+    latLong,
   },
 };
