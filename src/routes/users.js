@@ -1,41 +1,17 @@
-const { Router } = require('express');
-const { checkSchema } = require('express-validator');
 const controller = require('../controllers/users');
 const schema = require('../services/validations/users');
+const { poweringRoute } = require('../services/router');
+const {
+  validationToken,
+  adminRole,
+  allRole,
+  forUser
+} = require('../midelware/auth');
 
-const router = Router();
-
-router.get(
-  '/ping',
-  controller.ping,
-);
-
-router.post(
-  '/Create',
-  checkSchema(schema.create),
-  controller.create,
-);
-
-router.get(
-  '/GetAll',
-  checkSchema(schema.create),
-  controller.getAll,
-);
-
-router.get(
-  '/GetOne/:userId',
-  controller.getOne,
-);
-
-router.delete(
-  '/DeleteOne/:userId',
-  controller.deleteOne,
-);
-
-router.put(
-  '/Update/:userId',
-  checkSchema(schema.create),
-  controller.update,
-);
-
-module.exports = router;
+module.exports = poweringRoute(schema, controller, [
+  ['get',     '/',         'getAll',    adminRole,           validationToken ],
+  ['post',    '/',         'create'                                          ],
+  ['get',     '/:userId',  'getOne',    allRole,    forUser, validationToken ],
+  ['delete',  '/:userId',  'deleteOne', allRole,    forUser, validationToken ],
+  ['put',     '/:userId',  'update',    allRole,    forUser, validationToken ],
+]);

@@ -73,18 +73,22 @@ module.exports = {
   },
   update: {
     id: validationId(Model, NAMESPACE),
+    nom: {
+      ...nomInBody,
+      notEmpty: false,
+    },
     departementId: departementIdIfExist
   },
   getOne: {
     id: validationId(Model, NAMESPACE),
   },
-  getArrondissementByName: {
+  getByName: {
     nom: nomInParams,
   },
   deleteOne: {
     id: validationId(Model, NAMESPACE),
   },
   getAll: {
-    ...pagination()
+    ...pagination(),
   },
 };

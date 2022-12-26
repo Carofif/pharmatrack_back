@@ -1,3 +1,4 @@
+const routerAuth = require('./auth');
 const routerUsers = require('./users');
 const routerNumeroUrgences = require('./numeroUrgences');
 const routerDepartements = require('./departements');
@@ -7,6 +8,7 @@ const routerQuartiers = require('./quartiers');
 const routerAssurances = require('./assurances');
 
 const generateRoutes = (app) => {
+  app.use('/auth', routerAuth);
   app.use('/users', routerUsers);
   app.use('/numeros-urgence', routerNumeroUrgences);
   app.use('/departements', routerDepartements);
