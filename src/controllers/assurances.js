@@ -1,12 +1,12 @@
-const { Op } = require('sequelize');
 const { error: loggingError } = require('../config/logging');
-const { NumeroUrgence } = require('../sequelize/models');
+const { Assurance, PharmaAssurance } = require('../sequelize/models');
+const { Op } = require('sequelize');
 
-const NAMESPACE = 'NUMERO_URGENCE_CONTROLLER';
-const Model = NumeroUrgence;
+const NAMESPACE = 'ASSURANCE_CONTROLLER';
+const Model = Assurance;
 
 /**
- * Permet de récuperer la liste des numéros d\'urgences
+ * Permet de récuperer la liste des assurances
  * @param {Request} req
  * @param {Response} res
  */
@@ -16,6 +16,7 @@ const getAll = async (req, res) => {
     where: {
       nom: { [Op.iLike]: `%${nom || ''}%` },
     },
+    order: [['nom', 'ASC']],
   };
   if (limit) payoad.limit = limit;
   if (page) payoad.offset = (page - 1) * (payoad?.limit || 10);
@@ -23,14 +24,14 @@ const getAll = async (req, res) => {
     const { count, rows } = await Model.findAndCountAll(payoad);
     return res.status(200).json({ data: rows, count });
   } catch (error) {
-    const message = 'Erreur lors de la récupération des numéros d\'urgences';
+    const message = 'Erreur lors de la récupération des assurances';
     loggingError(NAMESPACE, message, error);
     return res.status(400).send({message});
   }
 };
 
 /**
- * Permet de récuperer un numero d'urgence
+ * Permet de récuperer une assurance
  * @param {Request} req
  * @param {Response} res
  */
@@ -40,7 +41,26 @@ const getOne = async (req, res) => {
     const data = await Model.findByPk(id);
     return res.status(200).json(data);
   } catch (error) {
-    const message = 'Erreur lors de la récupération d\'un numéro d\'urgence';
+    const message = 'Erreur lors de la récupération d\'une assurance';
+    loggingError(NAMESPACE, message, error);
+    return res.status(400).send({message});
+  }
+};
+
+/**
+ * Permet de récuperer une assurance  avec son nom
+ * @param {Request} req
+ * @param {Response} res
+ */
+const getByName = async (req, res) => {
+  try {
+    const { nom } = req.params;
+    const data = await Model.findOne({
+      where: { nom: { [Op.iLike]: `%${nom}%` } },
+    });
+    return res.status(200).json(data);
+  } catch (error) {
+    const message = 'Erreur lors de la récupération d\'une assurance';
     loggingError(NAMESPACE, message, error);
     return res.status(400).send({message});
   }
@@ -48,19 +68,19 @@ const getOne = async (req, res) => {
 
 const create = async (req, res) => {
   try {
-    const data = await Model.create({
-      nom: req.body.nom,
-      description: req.body.description,
-      adresse: req.body.adresse,
-      services: req.body.services,
-      telephone: req.body.telephone,
-      telephones: req.body.telephones,
-    });
+    const { nom, pharmacieId } = req.body;
+    const data = await Model.create({ nom });
+    if (pharmacieId) {
+      await PharmaAssurance.create({
+        assuranceId: data.id,
+        pharmacieId,
+      });
+    }
     return res.status(201).send({ data });
   } catch (error) {
-    const message = 'Erreur lors de la création d\'un numéro d\'urgence';
+    const message = 'Erreur lors de la création d\'une assurance';
     loggingError(NAMESPACE, message, error);
-    return res.status(400).send({message, errorMsg: error.message});
+    return res.status(400).send({message});
   }
 };
 
@@ -68,10 +88,11 @@ const deleteOne = async (req, res) => {
   try {
     const { id } = req.params;
     const model = await Model.findByPk(id);
+    // TODO: mettre après la gestion en déliant les pharmacies qui sont liés ou refuser la suppression
     await model.destroy();
-    return res.status(200).send('Numéro d\'urgence supprimé');
+    return res.status(200).send('Assurance supprimé');
   } catch (error) {
-    const message = 'Erreur lors de la suppression d\'un numéro d\'urgence';
+    const message = 'Erreur lors de la suppression d\'une assurance.';
     loggingError(NAMESPACE, message, error);
     return res.status(400).send({message});
   }
@@ -84,11 +105,6 @@ const update = async (req, res) => {
     let count = 0;
     [
       'nom',
-      'description',
-      'adresse',
-      'services',
-      'telephone',
-      'telephones',
     ].forEach(key => {
       if (req.body[key]) {
         count += 1;
@@ -100,9 +116,18 @@ const update = async (req, res) => {
       await data.save();
       msg = 'Modification effectué avec succès';
     }
+    if (req.body.pharmacieId) {
+      const where = {
+        assuranceId: id,
+        pharmacieId: req.body.pharmacieId,
+      };
+      const link = await PharmaAssurance.findOne({where});
+      if (!link) await PharmaAssurance.create(where);
+      msg = 'Modification effectué avec succès';
+    }
     return res.status(200).send({data, msg});
   } catch (error) {
-    const message = 'Erreur lors de la mise à jour d\'un numéro d\'urgence';
+    const message = 'Erreur lors de la mise à jour d\'une assurance.';
     loggingError(NAMESPACE, message, error);
     return res.status(400).send({message});
   }
@@ -111,6 +136,7 @@ const update = async (req, res) => {
 module.exports = {
   getAll,
   getOne,
+  getByName,
   create,
   deleteOne,
   update,
