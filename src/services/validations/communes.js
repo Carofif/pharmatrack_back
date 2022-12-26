@@ -74,18 +74,22 @@ module.exports = {
   },
   update: {
     id: validationId(Model, NAMESPACE),
+    nom: {
+      ...nomInBody,
+      notEmpty: false,
+    },
     arrondissementId: arrondissementIdIfExist
   },
   getOne: {
     id: validationId(Model, NAMESPACE),
   },
-  getCommuneByName: {
+  getByName: {
     nom: nomInParams,
   },
   deleteOne: {
     id: validationId(Model, NAMESPACE),
   },
   getAll: {
-    ...pagination()
+    ...pagination(),
   },
 };

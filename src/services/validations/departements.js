@@ -35,17 +35,21 @@ module.exports = {
   },
   update: {
     id: validationId(Model, NAMESPACE),
+    nom: {
+      ...nomInBody,
+      notEmpty: false,
+    },
   },
   getOne: {
     id: validationId(Model, NAMESPACE),
   },
-  getDepartementByName: {
+  getByName: {
     nom: nomInParams,
   },
   deleteOne: {
     id: validationId(Model, NAMESPACE),
   },
   getAll: {
-    ...pagination()
+    ...pagination(),
   },
 };

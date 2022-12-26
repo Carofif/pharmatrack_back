@@ -1,29 +1,9 @@
-const { error: loggingError } = require('../config/logging');
-const { validationResult } = require('express-validator');
-const { Departements, Arrondissement } = require('../sequelize/models');
 const { Op } = require('sequelize');
+const { error: loggingError } = require('../config/logging');
+const { Departements, Arrondissement } = require('../sequelize/models');
 
 const NAMESPACE = 'DEPARTEMENT_CONTROLLER';
 const Model = Departements;
-
-/**
- * Permet de tester la disponibilité de l'endpoint
- * @param {Request} req
- * @param {Response} res
- */
-const ping = (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-  try {
-    return res.status(200).send('ping');
-  } catch (error) {
-    return res.status(400).send({
-      message: error.message,
-    });
-  }
-};
 
 /**
  * Permet de récuperer la liste des départements
@@ -31,10 +11,6 @@ const ping = (req, res) => {
  * @param {Response} res
  */
 const getAll = async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
   const { page, limit, nom } = req.query;
   const payoad = {
     where: {
@@ -60,10 +36,6 @@ const getAll = async (req, res) => {
  * @param {Response} res
  */
 const getOne = async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
   try {
     const { id } = req.params;
     const data = await Model.findOne({ where: { id }, include: Arrondissement });
@@ -80,11 +52,7 @@ const getOne = async (req, res) => {
  * @param {Request} req
  * @param {Response} res
  */
-const getDepartementByName = async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
+const getByName = async (req, res) => {
   try {
     const { nom } = req.params;
     const data = await Model.findOne({
@@ -100,10 +68,6 @@ const getDepartementByName = async (req, res) => {
 };
 
 const create = async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
   try {
     const data = await Model.create({
       nom: req.body.nom,
@@ -117,10 +81,6 @@ const create = async (req, res) => {
 };
 
 const deleteOne = async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
   try {
     const { id } = req.params;
     const model = await Model.findByPk(id);
@@ -134,10 +94,6 @@ const deleteOne = async (req, res) => {
 };
 
 const update = async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
   try {
     const { id } = req.params;
     const data = await Model.findByPk(id);
@@ -164,10 +120,9 @@ const update = async (req, res) => {
 };
 
 module.exports = {
-  ping,
   getAll,
   getOne,
-  getDepartementByName,
+  getByName,
   create,
   deleteOne,
   update,
