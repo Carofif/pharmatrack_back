@@ -1,5 +1,5 @@
-const controller = require('../controllers/pharmacies');
-const schema = require('../services/validations/pharamcies');
+const controller = require('../controllers/periodesGardes');
+const schema = require('../services/validations/periodesGardes');
 const { poweringRoute } = require('../services/router');
 
 module.exports = poweringRoute(schema, controller, [
@@ -8,5 +8,4 @@ module.exports = poweringRoute(schema, controller, [
   ['get',     '/:id',       'getOne'    ],
   ['delete',  '/:id',       'deleteOne' ],
   ['put',     '/:id',       'update'    ],
-  ['get',     '/name/:nom', 'getByName' ],
 ]);
