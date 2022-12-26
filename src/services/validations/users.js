@@ -104,6 +104,6 @@ module.exports = {
     userId: validationId(Model, NAMESPACE),
   },
   getAll: {
-    ...pagination()
+    ...pagination(),
   },
 };

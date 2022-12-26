@@ -37,7 +37,7 @@ const pharmacieId = {
       if (!isUUID(value, 4)) return Promise.reject('Doit être une UUID');
       try {
         const data = await Pharmacie.findByPk(value);
-        if (!data) return Promise.reject('Ce département n\'existe pas');
+        if (!data) return Promise.reject('Cette pharmacie n\'existe pas');
         return value;
       } catch (e) {
         loggingError(NAMESPACE, e.message, e);
@@ -72,6 +72,6 @@ module.exports = {
     id: validationId(Model, NAMESPACE),
   },
   getAll: {
-    ...pagination()
+    ...pagination(),
   },
 };

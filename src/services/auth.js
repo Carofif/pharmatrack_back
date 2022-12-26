@@ -11,5 +11,5 @@ const generateUserToken = (dataToken, expiresIn) => {
 };
 
 module.exports = {
-  generateUserToken
+  generateUserToken,
 };
