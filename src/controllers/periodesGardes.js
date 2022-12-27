@@ -123,15 +123,14 @@ const update = async (req, res) => {
 const createAll = async (req, res) => {
   try {
     const { periodesGardes } = req.body;
-    const pharmaciesIds = periodesGardes.map(p => p.pharamcieId);
-    const dataToCreate = periodesGardes.forEach((p) => delete p.pharmacieId);
-    const data = await Model.bulkCreate({ dataToCreate });
-    if (pharmaciesIds.length > 0) {
+    const { pharmacieId } = req.params;
+    const data = await Model.bulkCreate({ periodesGardes });
+    if (pharmacieId) {
       const lienGardes = [];
-      pharmaciesIds.forEach((el, index) => {
+      data.forEach(el => {
         lienGardes.push({
-          periodeGardeId: data[index].id,
-          pharmacieId : el,
+          periodeGardeId: el.id,
+          pharmacieId: pharmacieId,
         });
       });
       await Garde.bulkCreate({ lienGardes });
