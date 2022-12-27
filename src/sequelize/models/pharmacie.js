@@ -31,8 +31,8 @@ module.exports = (sequelize, DataTypes) => {
     latitude: DataTypes.FLOAT,
     longitude: DataTypes.FLOAT,
     ouvertToutTemps: DataTypes.BOOLEAN,
-    heureOuverture: DataTypes.DATE,
-    heureFermeture: DataTypes.DATE,
+    heureOuverture: DataTypes.TIME,
+    heureFermeture: DataTypes.TIME,
     quartierId: DataTypes.UUID
   }, {
     sequelize,

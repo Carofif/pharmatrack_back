@@ -1,19 +1,20 @@
 const { isUUID } = require('validator');
 const { Pharmacie, Quartier } = require('../../sequelize/models');
 const { error: loggingError } = require('../../config/logging');
-const { validationId, pagination } = require('./general');
+const { validationId, pagination, isRequired } = require('./general');
+const moment = require('moment/moment');
 
 const NAMESPACE = 'PHARAMCIE_VALIDATION';
 const Model = Pharmacie;
 
 const nomInParams = {
   in: ['params'],
-  notEmpty: true,
-  errorMessage: 'Ce champ est obligatoire',
+  ...isRequired,
 };
 
 const nomInBody = {
   in: ['body'],
+  ...isRequired,
   custom: {
     options: async (value) => {
       const nom = value || '';
@@ -29,8 +30,7 @@ const nomInBody = {
 
 const quartierId = {
   in: ['body'],
-  notEmpty: true,
-  errorMessage: 'Ce champ est obligatoire',
+  ...isRequired,
   custom: {
     options: async (value) => {
       if (!value) return;
@@ -49,64 +49,111 @@ const quartierId = {
 
 const ouvertToutTemps = {
   in: ['body'],
-  isBoolean: true,
-  errorMessage: 'Ce champ doit être un booléen',
+  toBoolean: true,
+  ...isRequired,
+  isBoolean: {
+    options: { loose: false },
+    errorMessage: 'Le champ "ouvertToutTemps" doit être un booléen',
+  },
 };
 
 const latitude = {
   in: ['body'],
-  isFloat: true,
-  errorMessage: 'La latitude doit être un nombre à virgule',
+  ...isRequired,
+  toFloat: true,
+  isFloat: {
+    errorMessage: 'Le champ "latitude" doit être un nombre à virgule',
+  },
 };
 
 const longitude = {
   in: ['body'],
-  isFloat: true,
-  errorMessage: 'La longitude doit être un nombre à virgule',
+  ...isRequired,
+  toFloat: true,
+  isFloat: {
+    errorMessage: 'Le champ "longitude" doit être un nombre à virgule',
+  },
 };
 
 const latLong = {
   in: ['body'],
-  isLatLong: true,
-  errorMessage: 'La latitude ou la longitude invalide',
+  isLatLong: {
+    errorMessage: 'Le champ "Latitude" ou "longitude" est invalide',
+  },
 };
 
-const quartierIdIfExist = {
+const rayon = {
+  in: ['query'],
+  ...isRequired,
+  toFloat: true,
+  isFloat: {
+    errorMessage: 'Le champ "rayon" doit être un nombre à virgule',
+  },
+};
+
+const heureOuverture = {
   in: ['body'],
+  ...isRequired,
   custom: {
-    options: async (value) => {
-      if (!value) return;
-      if (!isUUID(value, 4)) return Promise.reject('Doit être une UUID');
-      try {
-        const data = await Quartier.findByPk(value);
-        if (!data) {
-          return Promise.reject('Ce quartier n\'existe pas');
-        }
-      } catch (e) {
-        loggingError(NAMESPACE, e.message, e);
-      }
-    }
+    options: (value) => moment(value, 'HH:mm').isValid(),
+    errorMessage: 'Le champ "heureOuverture" doit être au format "HH:mm"',
+  },
+};
+
+const heureFermeture = {
+  in: ['body'],
+  ...isRequired,
+  custom: {
+    options: (value) => moment(value, 'HH:mm').isValid(),
+    errorMessage: 'Le champ "heureFermeture" doit être au format "HH:mm"',
   },
 };
 
 module.exports = {
   create: {
-    nom: {
-      ...nomInBody,
-      notEmpty: true,
-      trim: true,
-      errorMessage: 'Ce champ est obligatoire',
-    },
+    nom: nomInBody,
     quartierId,
     ouvertToutTemps,
     latitude,
     longitude,
-    latLong
+    latLong,
+    heureOuverture,
+    heureFermeture,
   },
   update: {
     id: validationId(Model, NAMESPACE),
-    nom: nomInBody,
-    quartierId: quartierIdIfExist,
+    nom: {
+      ...nomInBody,
+      optional: true,
+    },
+    quartierId: {
+      ...quartierId,
+      optional: true,
+    },
+    ouvertToutTemps: {
+      ...ouvertToutTemps,
+      optional: true,
+    },
+    latitude: {
+      ...latitude,
+      optional: true,
+    },
+    longitude: {
+      ...longitude,
+      optional: true,
+    },
+    latLong: {
+      ...latLong,
+      optional: true,
+    },
+    heureOuverture: {
+      ...heureOuverture,
+      optional: true,
+    },
+    heureFermeture: {
+      ...heureFermeture,
+      optional: true,
+    },
   },
   getOne: {
     id: validationId(Model, NAMESPACE),
@@ -119,6 +166,28 @@ module.exports = {
   },
   getAll: {
     ...pagination(),
-    latLong,
+    quartierId: {
+      ...quartierId,
+      in: ['query'],
+      optional: true,
+    },
+    ouvertToutTemps: {
+      ...ouvertToutTemps,
+      in: ['query'],
+      optional: true,
+    },
+    latitude: {
+      ...latitude,
+      in: ['query'],
+    },
+    longitude: {
+      ...longitude,
+      in: ['query'],
+    },
+    latLong: {
+      ...latLong,
+      in: ['query'],
+    },
+    rayon,
   },
 };
