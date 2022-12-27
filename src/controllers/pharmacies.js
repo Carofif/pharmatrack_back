@@ -12,7 +12,7 @@ const Model = Pharmacie;
  * @param {Response} res
  */
 const getAll = async (req, res) => {
-  const { page, limit, nom, quartierId, longitude, latitude, rayon, ouvertAllTime } = req.query;
+  const { page, limit, nom, quartierId, longitude, latitude, rayon, ouvertToutTemps } = req.query;
   const coordonnesGPS = {
     latitudeMin: latitude - rayon / 1.852 / 60,
     latitudeMax: latitude + rayon / 1.852 / 60,
@@ -22,12 +22,6 @@ const getAll = async (req, res) => {
   const payload = {
     where: {
       nom: { [Op.iLike]: `%${nom || ''}%` },
-      quartierId: {
-        [Op.eq]: quartierId,
-      },
-      ouvertToutTemps: {
-        [Op.is]: ouvertAllTime,
-      },
       longitude: {
         [Op.gt]: coordonnesGPS.longitudeMin,
         [Op.lt]: coordonnesGPS.longitudeMax,
@@ -41,6 +35,9 @@ const getAll = async (req, res) => {
   };
   if (limit) payload.limit = limit;
   if (page) payload.offset = (page - 1) * (payload?.limit || 10);
+
+  if (quartierId) payload.where.quartierId = { [Op.eq]: quartierId };
+  if (ouvertToutTemps !== undefined) payload.where.ouvertToutTemps = { [Op.is]: ouvertToutTemps };
   try {
     const { count, rows } = await Model.findAndCountAll(payload);
     return res.status(200).json({ data: rows, count });
@@ -117,6 +114,7 @@ const deleteOne = async (req, res) => {
   try {
     const { id } = req.params;
     const model = await Model.findByPk(id);
+    // TODO: Supprimer les liens
     await model.destroy();
     return res.status(200).send('Pharmacie supprimée');
   } catch (error) {
@@ -128,8 +126,9 @@ const deleteOne = async (req, res) => {
 
 const update = async (req, res) => {
   try {
-    const { id } = req.params;
-    const data = await Model.findByPk(id);
+    // const { id } = req.params;
+    // const data = await Model.findByPk(id);
+    const data = req.model;
     let count = 0;
     [
       'nom',

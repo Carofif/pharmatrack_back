@@ -1,22 +1,20 @@
 const { isUUID } = require('validator');
 const { Arrondissement, Commune } = require('../../sequelize/models');
 const { error: loggingError } = require('../../config/logging');
-const { validationId, pagination  } = require('./general');
+const { validationId, pagination, isRequired  } = require('./general');
 
 const NAMESPACE = 'COMMUNE_VALIDATION';
 const Model = Commune;
 
 const nomInParams = {
   in: ['params'],
-  notEmpty: true,
-  errorMessage: 'Ce champ est obligatoire',
+  ...isRequired,
 };
 
 const nomInBody = {
   in: ['body'],
-  notEmpty: true,
+  ...isRequired,
   trim: true,
-  errorMessage: 'Ce champ est obligatoire',
   custom: {
     options: async (value) => {
       const nom = value || '';
@@ -32,28 +30,9 @@ const nomInBody = {
 
 const arrondissementId = {
   in: ['body'],
-  notEmpty: true,
-  errorMessage: 'Ce champ est obligatoire',
+  ...isRequired,
   custom: {
     options: async (value) => {if (!value) return;
-      if (!isUUID(value, 4)) return Promise.reject('Doit être une UUID');
-      try {
-        const data = await Arrondissement.findByPk(value);
-        if (!data) {
-          return Promise.reject('Cet arrondissement n\'existe pas');
-        }
-      } catch (e) {
-        loggingError(NAMESPACE, e.message, e);
-      }
-    }
-  },
-};
-
-const arrondissementIdIfExist = {
-  in: ['body'],
-  custom: {
-    options: async (value) => {
-      if (!value) return;
       if (!isUUID(value, 4)) return Promise.reject('Doit être une UUID');
       try {
         const data = await Arrondissement.findByPk(value);
@@ -76,9 +55,12 @@ module.exports = {
     id: validationId(Model, NAMESPACE),
     nom: {
       ...nomInBody,
-      notEmpty: false,
+      optional: true,
     },
-    arrondissementId: arrondissementIdIfExist
+    arrondissementId: {
+      ...arrondissementId,
+      optional: true,
+    }
   },
   getOne: {
     id: validationId(Model, NAMESPACE),

@@ -6,13 +6,15 @@ const validationId = (model, namespace) => {
   return {
     in: ['params'],
     custom: {
-      options: async (value) => {
+      options: async (value, { req }) => {
         if (!isUUID(value, 4)) return Promise.reject('Doit être une UUID');
         try {
           const data = await model.findByPk(value);
           if (!data) {
             return Promise.reject('Cet élement n\'existe pas');
           }
+          req.model = data;
+          return value;
         } catch (e) {
           loggingError(namespace, e.message, e);
         }
@@ -53,8 +55,14 @@ const checkValidation = (req, res, next) => {
   return;
 };
 
+const isRequired = {
+  notEmpty: true,
+  errorMessage: 'Ce champ est obligatoire',
+};
+
 module.exports = {
   validationId,
   pagination,
   checkValidation,
+  isRequired,
 };

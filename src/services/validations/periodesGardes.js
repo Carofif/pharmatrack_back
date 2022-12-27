@@ -2,16 +2,15 @@ const { isUUID } = require('validator');
 const { Op } = require('sequelize');
 const { PeriodeGarde, Pharmacie } = require('../../sequelize/models');
 const { error: loggingError } = require('../../config/logging');
-const { validationId, pagination } = require('./general');
+const { validationId, pagination, isRequired } = require('./general');
 
 const NAMESPACE = 'ASSURANCES_VALIDATION';
 const Model = PeriodeGarde;
 
-const dateDebutInBody = {
+const dateDebut = {
   in: ['body'],
-  notEmpty: true,
+  ...isRequired,
   trim: true,
-  errorMessage: 'Ce champ est obligatoire',
   custom: {
     options: async (value) => {
       try {
@@ -24,11 +23,10 @@ const dateDebutInBody = {
     }
   },
 };
-const dateFinInBody = {
+const dateFin = {
   in: ['body'],
-  notEmpty: true,
+  ...isRequired,
   trim: true,
-  errorMessage: 'Ce champ est obligatoire',
   custom: {
     options: async (value) => {
       try {
@@ -63,14 +61,23 @@ const pharmacieId = {
 module.exports = {
   create: {
     pharmacieId,
-    dateDebut: dateDebutInBody,
-    dateFin: dateFinInBody,
+    dateDebut,
+    dateFin,
   },
   update: {
     id: validationId(Model, NAMESPACE),
-    dateDebut: dateDebutInBody,
-    dateFin: dateFinInBody,
-    pharmacieId,
+    dateDebut: {
+      ...dateDebut,
+      optional: true,
+    },
+    dateFin: {
+      ...dateFin,
+      optional: true,
+    },
+    pharmacieId: {
+      ...pharmacieId,
+      optional: true,
+    },
   },
   getOne: {
     id: validationId(Model, NAMESPACE),

@@ -1,19 +1,19 @@
 const { isUUID } = require('validator');
 const { Assurance, Pharmacie } = require('../../sequelize/models');
 const { error: loggingError } = require('../../config/logging');
-const { validationId, pagination } = require('./general');
+const { validationId, pagination, isRequired } = require('./general');
 
 const NAMESPACE = 'ASSURANCES_VALIDATION';
 const Model = Assurance;
 
 const nomInParams = {
   in: ['params'],
-  notEmpty: true,
-  errorMessage: 'Ce champ est obligatoire',
+  ...isRequired
 };
 
 const nomInBody = {
   in: ['body'],
+  ...isRequired,
   custom: {
     options: async (value) => {
       if (!value) return value;
@@ -50,16 +50,14 @@ const pharmacieId = {
 module.exports = {
   create: {
     pharmacieId,
-    nom: {
-      ...nomInBody,
-      notEmpty: true,
-      trim: true,
-      errorMessage: 'Ce champ est obligatoire',
-    },
+    nom: nomInBody,
   },
   update: {
     id: validationId(Model, NAMESPACE),
-    nom: nomInBody,
+    nom: {
+      ...nomInBody,
+      optional: true,
+    },
     pharmacieId,
   },
   getOne: {
