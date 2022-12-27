@@ -91,9 +91,7 @@ module.exports = {
     },
     email: {
       ...email,
-      isEmail: {
-        if: value => !!value
-      },
+      optional: true,
     },
   },
   getOne: {

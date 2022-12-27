@@ -1,21 +1,19 @@
 const { isUUID } = require('validator');
 const { Arrondissement, Departements } = require('../../sequelize/models');
 const { error: loggingError } = require('../../config/logging');
-const { validationId, pagination } = require('./general');
+const { validationId, pagination, isRequired } = require('./general');
 
 const NAMESPACE = 'ARRONDISSEMENT_VALIDATION';
 const Model = Arrondissement;
 
 const nomInParams = {
   in: ['params'],
-  notEmpty: true,
-  errorMessage: 'Ce champ est obligatoire',
+  ...isRequired
 };
 const nomInBody = {
   in: ['body'],
-  notEmpty: true,
+  ...isRequired,
   trim: true,
-  errorMessage: 'Ce champ est obligatoire',
   custom: {
     options: async (value) => {
       const nom = value || '';
@@ -31,25 +29,7 @@ const nomInBody = {
 
 const departementId = {
   in: ['body'],
-  notEmpty: true,
-  errorMessage: 'Ce champ est obligatoire',
-  custom: {
-    options: async (value) => {
-      if (!value) return;
-      if (!isUUID(value, 4)) return Promise.reject('Doit être une UUID');
-      try {
-        const data = await Departements.findByPk(value);
-        if (!data) {
-          return Promise.reject('Ce département n\'existe pas');
-        }
-      } catch (e) {
-        loggingError(NAMESPACE, e.message, e);
-      }
-    }
-  },
-};
-const departementIdIfExist = {
-  in: ['body'],
+  ...isRequired,
   custom: {
     options: async (value) => {
       if (!value) return;
@@ -75,9 +55,12 @@ module.exports = {
     id: validationId(Model, NAMESPACE),
     nom: {
       ...nomInBody,
-      notEmpty: false,
+      optional: true,
     },
-    departementId: departementIdIfExist
+    departementId: {
+      ...departementId,
+      optional: true,
+    }
   },
   getOne: {
     id: validationId(Model, NAMESPACE),
