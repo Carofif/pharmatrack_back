@@ -81,9 +81,10 @@ const create = async (req, res) => {
 };
 
 const deleteOne = async (req, res) => {
+  const { model } = req;
   try {
-    const { id } = req.params;
-    const model = await Model.findByPk(id);
+    // const { id } = req.params;
+    // const model = await Model.findByPk(id);
     await model.destroy();
     return res.status(200).send('Département supprimé');
   } catch (error) {
@@ -94,24 +95,25 @@ const deleteOne = async (req, res) => {
 };
 
 const update = async (req, res) => {
+  const { model } = req;
   try {
-    const { id } = req.params;
-    const data = await Model.findByPk(id);
+    // const { id } = req.params;
+    // const model = await Model.findByPk(id);
     let count = 0;
     [
       'nom',
     ].forEach(key => {
       if (req.body[key]) {
         count += 1;
-        data[key] = req.body[key];
+        model[key] = req.body[key];
       }
     });
     let msg = 'Aucun modification effectué';
     if (count > 0) {
-      await data.save();
+      await model.save();
       msg = 'Modification effectué avec succès';
     }
-    return res.status(200).send({data, msg});
+    return res.status(200).send({data: model, msg});
   } catch (error) {
     const message = 'Erreur lors de la mise à jour d\'un département.';
     loggingError(NAMESPACE, message, error);

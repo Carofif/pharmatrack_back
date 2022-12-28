@@ -10,9 +10,7 @@ const validationId = (model, namespace) => {
         if (!isUUID(value, 4)) return Promise.reject('Doit être une UUID');
         try {
           const data = await model.findByPk(value);
-          if (!data) {
-            return Promise.reject('Cet élement n\'existe pas');
-          }
+          if (!data) return Promise.reject('Cet élement n\'existe pas');
           req.model = data;
           return value;
         } catch (e) {

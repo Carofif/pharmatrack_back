@@ -13,16 +13,11 @@ const Model = PeriodeGarde;
 const getAll = async (req, res) => {
   const { page, limit, dateDebut, dateFin } = req.query;
   const payoad = {
-    where: {
-      dateDebut: {
-        [Op.gte] : dateDebut,
-      },
-      dateFin: {
-        [Op.lte] : dateFin,
-      },
-    },
+    where: {},
     order: [['dateDebut', 'ASC']],
   };
+  if (dateDebut) payoad.where.dateDebut = { [Op.gte]: dateDebut };
+  if (dateFin) payoad.where.dateFin = { [Op.lte]: dateFin };
   if (limit) payoad.limit = limit;
   if (page) payoad.offset = (page - 1) * (payoad?.limit || 10);
   try {
@@ -40,11 +35,10 @@ const getAll = async (req, res) => {
  * @param {Request} req
  * @param {Response} res
  */
-const getOne = async (req, res) => {
+const getOne = (req, res) => {
+  const { model } = req;
   try {
-    const { id } = req.params;
-    const data = await Model.findByPk(id);
-    return res.status(200).json(data);
+    return res.status(200).json(model);
   } catch (error) {
     const message = 'Erreur lors de la récupération d\'une période de garde';
     loggingError(NAMESPACE, message, error);
@@ -54,7 +48,8 @@ const getOne = async (req, res) => {
 
 const create = async (req, res) => {
   try {
-    const { dateDebut, dateFin, pharmacieId } = req.body;
+    const { pharmacieId } = req.body;
+    const { dateDebut, dateFin } = req.body.periode;
     const data = await Model.create({ dateDebut, dateFin });
     if (pharmacieId) {
       await Garde.create({
@@ -70,10 +65,48 @@ const create = async (req, res) => {
   }
 };
 
-const deleteOne = async (req, res) => {
+const createAll = async (req, res) => {
+  const { periodes } = req.body;
+  const periodesGarde = periodes.map(p => {
+    const { dateDebut, dateFin } = p;
+    return { dateDebut, dateFin };
+  });
   try {
-    const { id } = req.params;
-    const model = await Model.findByPk(id);
+    const data = await Model.bulkCreate(periodesGarde);
+    return res.status(201).send({ data });
+  } catch (error) {
+    const message = 'Erreur lors de la création d\'une période de garde';
+    loggingError(NAMESPACE, message, error);
+    return res.status(400).send({message});
+  }
+};
+
+const createAllForPharmacie = async (req, res) => {
+  const { pharmacieId } = req.params;
+  const { periodes } = req.body;
+  const periodesGarde = periodes.map(p => {
+    const { dateDebut, dateFin } = p;
+    return { dateDebut, dateFin };
+  });
+  try {
+    const data = await Model.bulkCreate(periodesGarde);
+    if (pharmacieId) {
+      const lienGardes = data.map(el => ({
+        periodeGardeId: el.id, pharmacieId
+      }));
+      await Garde.bulkCreate(lienGardes);
+    }
+    return res.status(200).send({ data });
+  } catch (error) {
+    const message = 'Erreur lors de la création multiple des périodes de garde';
+    loggingError(NAMESPACE, message, error);
+    return res.status(400).send({message});
+  }
+};
+
+const deleteOne = async (req, res) => {
+  const { model } = req;
+  try {
     // TODO: mettre après la gestion en déliant les pharmacies qui sont liés ou refuser la suppression
     await model.destroy();
     return res.status(200).send('Période de garde supprimée');
@@ -85,59 +118,36 @@ const deleteOne = async (req, res) => {
 };
 
 const update = async (req, res) => {
+  const { model } = req;
   try {
-    const { id } = req.params;
-    const data = await Model.findByPk(id);
     let count = 0;
     [
       'dateDebut',
       'dateFin'
     ].forEach(key => {
-      if (req.body[key]) {
+      if (req.body?.periode?.[key]) {
         count += 1;
-        data[key] = req.body[key];
+        model[key] = req.body.periode[key];
       }
     });
     let msg = 'Aucun modification effectué';
     if (count > 0) {
-      await data.save();
+      model.debutFin = `${model.dateDebut}_${model.dateFin}`;
+      await model.save();
       msg = 'Modification effectué avec succès';
     }
     if (req.body.pharmacieId) {
       const where = {
-        periodeGardeId: id,
+        periodeGardeId: model.id,
         pharmacieId: req.body.pharmacieId,
       };
       const link = await Garde.findOne({where});
       if (!link) await Garde.create(where);
       msg = 'Modification effectué avec succès';
     }
-    return res.status(200).send({data, msg});
+    return res.status(200).send({data: model, msg});
   } catch (error) {
     const message = 'Erreur lors de la mise à jour d\'une assurance.';
-    loggingError(NAMESPACE, message, error);
-    return res.status(400).send({message});
-  }
-};
-
-const createAll = async (req, res) => {
-  try {
-    const { periodesGardes } = req.body;
-    const { pharmacieId } = req.params;
-    const data = await Model.bulkCreate({ periodesGardes });
-    if (pharmacieId) {
-      const lienGardes = [];
-      data.forEach(el => {
-        lienGardes.push({
-          periodeGardeId: el.id,
-          pharmacieId: pharmacieId,
-        });
-      });
-      await Garde.bulkCreate({ lienGardes });
-    }
-    return res.status(200).send({ data });
-  } catch (error) {
-    const message = 'Erreur lors de la création multiple des périodes de garde';
     loggingError(NAMESPACE, message, error);
     return res.status(400).send({message});
   }
@@ -149,5 +159,6 @@ module.exports = {
   create,
   deleteOne,
   update,
+  createAllForPharmacie,
   createAll,
 };
