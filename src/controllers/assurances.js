@@ -1,6 +1,6 @@
+const { Op } = require('sequelize');
 const { error: loggingError } = require('../config/logging');
 const { Assurance, PharmaAssurance } = require('../sequelize/models');
-const { Op } = require('sequelize');
 
 const NAMESPACE = 'ASSURANCE_CONTROLLER';
 const Model = Assurance;
@@ -35,11 +35,12 @@ const getAll = async (req, res) => {
  * @param {Request} req
  * @param {Response} res
  */
-const getOne = async (req, res) => {
+const getOne = (req, res) => {
+  const { model } = req;
   try {
-    const { id } = req.params;
-    const data = await Model.findByPk(id);
-    return res.status(200).json(data);
+    // const { id } = req.params;
+    // const data = await Model.findByPk(id);
+    return res.status(200).json(model);
   } catch (error) {
     const message = 'Erreur lors de la récupération d\'une assurance';
     loggingError(NAMESPACE, message, error);
@@ -85,9 +86,10 @@ const create = async (req, res) => {
 };
 
 const deleteOne = async (req, res) => {
+  const { model } = req;
   try {
-    const { id } = req.params;
-    const model = await Model.findByPk(id);
+    // const { id } = req.params;
+    // const model = await Model.findByPk(id);
     // TODO: mettre après la gestion en déliant les pharmacies qui sont liés ou refuser la suppression
     await model.destroy();
     return res.status(200).send('Assurance supprimé');
@@ -99,33 +101,34 @@ const deleteOne = async (req, res) => {
 };
 
 const update = async (req, res) => {
+  const { model } = req;
   try {
-    const { id } = req.params;
-    const data = await Model.findByPk(id);
+    // const { id } = req.params;
+    // const model = await Model.findByPk(id);
     let count = 0;
     [
       'nom',
     ].forEach(key => {
       if (req.body[key]) {
         count += 1;
-        data[key] = req.body[key];
+        model[key] = req.body[key];
       }
     });
     let msg = 'Aucun modification effectué';
     if (count > 0) {
-      await data.save();
+      await model.save();
       msg = 'Modification effectué avec succès';
     }
     if (req.body.pharmacieId) {
       const where = {
-        assuranceId: id,
+        assuranceId: model.id,
         pharmacieId: req.body.pharmacieId,
       };
       const link = await PharmaAssurance.findOne({where});
       if (!link) await PharmaAssurance.create(where);
       msg = 'Modification effectué avec succès';
     }
-    return res.status(200).send({data, msg});
+    return res.status(200).send({data: model, msg});
   } catch (error) {
     const message = 'Erreur lors de la mise à jour d\'une assurance.';
     loggingError(NAMESPACE, message, error);

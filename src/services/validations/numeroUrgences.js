@@ -1,15 +1,14 @@
 const { NumeroUrgence } = require('../../sequelize/models');
 const { error: loggingError } = require('../../config/logging');
-const { validationId, pagination } = require('./general');
+const { validationId, pagination, isRequired } = require('./general');
 
 const NAMESPACE = 'NUMERO_URGENCE_VALIDATION';
 const Model = NumeroUrgence;
 
 const nom = {
   in: ['body'],
-  notEmpty: true,
+  ...isRequired,
   trim: true,
-  errorMessage: 'Ce champ est obligatoire',
   custom: {
     options: async (value) => {
       const nom = value || '';
@@ -25,9 +24,8 @@ const nom = {
 };
 const telephone = {
   in: ['body'],
-  notEmpty: true,
+  ...isRequired,
   trim: true,
-  errorMessage: 'Ce champ est obligatoire',
   custom: {
     options: async (value) => {
       const telephone = value || '';
@@ -51,6 +49,14 @@ module.exports = {
   },
   update: {
     id: validationId(Model, NAMESPACE),
+    nom: {
+      ...nom,
+      optional: true,
+    },
+    telephone: {
+      ...telephone,
+      optional: true,
+    },
   },
   getOne: {
     id: validationId(Model, NAMESPACE),

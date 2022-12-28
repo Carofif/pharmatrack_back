@@ -59,12 +59,13 @@ const getAll = async (req, res) => {
   }
 };
 
-const getOne = async (req, res) => {
-  const { userId } = req.params;
+const getOne = (req, res) => {
+  // const { userId } = req.params;
+  const { model } = req;
   try {
-    const user = await Utilisateur.findByPk(userId);
-    delete user.dataValues.motDePasse;
-    return res.status(200).json(user);
+    // const user = await Utilisateur.findByPk(userId);
+    delete model.dataValues.motDePasse;
+    return res.status(200).json(model);
   } catch (error) {
     loggingError(NAMESPACE, 'Erreur lors de la récupération d\'un utilisateurs', error);
     return res.status(400).send({
@@ -74,10 +75,11 @@ const getOne = async (req, res) => {
 };
 
 const deleteOne = async (req, res) => {
-  const { userId } = req.params;
+  // const { userId } = req.params;
+  const { model } = req;
   try {
-    const user = await Utilisateur.findByPk(userId);
-    await user.destroy();
+    // const user = await Utilisateur.findByPk(userId);
+    await model.destroy();
     return res.status(200).send('Utilisateur supprimé');
   } catch (error) {
     loggingError(NAMESPACE, 'Erreur lors de la suppression d\'un utilisateur', error);
@@ -88,9 +90,10 @@ const deleteOne = async (req, res) => {
 };
 
 const update = async (req, res) => {
-  const { userId } = req.params;
+  // const { userId } = req.params;
+  const { model } = req;
   try {
-    const user = await Utilisateur.findByPk(userId);
+    // const model = await Utilisateur.findByPk(userId);
     let count = 0;
     [
       'nom',
@@ -103,16 +106,16 @@ const update = async (req, res) => {
     ].forEach(key => {
       if (req.body[key]) {
         count += 1;
-        user[key] = req.body[key];
+        model[key] = req.body[key];
       }
     });
     let msg = 'Aucun modification effectué';
     if (count > 0) {
-      await user.save();
+      await model.save();
       msg = 'Modification effectué avec succès';
     }
-    delete user.dataValues.motDePasse;
-    return res.status(200).send({user, msg});
+    delete model.dataValues.motDePasse;
+    return res.status(200).send({data: model, msg});
   } catch (error) {
     loggingError(NAMESPACE, 'Erreur lors de la mise à jour d\'un utilisateur', error);
     return res.status(400).send({

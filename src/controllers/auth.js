@@ -1,4 +1,4 @@
-const { Utilisateur } = require('../sequelize/models');
+// const { Utilisateur } = require('../sequelize/models');
 const { hashMdp } = require('../services/user');
 const { generateUserToken } = require('../services/auth');
 
@@ -28,11 +28,12 @@ const checkToken = (req, res) => {
 };
 
 const changeMdp = async (req, res) => {
+  const { model } = req;
   try {
-    const { userId } = req.params;
-    const user = await Utilisateur.findByPk(userId);
-    user.motDePasse = hashMdp(req.body.mdpNouveau);
-    await user.save();
+    // const { userId } = req.params;
+    // const user = await Utilisateur.findByPk(userId);
+    model.motDePasse = hashMdp(req.body.mdpNouveau);
+    await model.save();
     return res.status(200).send('Mot de passe mise à jour');
   } catch (error) {
     return res.status(400).send({

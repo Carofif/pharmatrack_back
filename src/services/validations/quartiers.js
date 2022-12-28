@@ -1,22 +1,20 @@
 const { isUUID } = require('validator');
 const { Quartier, Commune } = require('../../sequelize/models');
 const { error: loggingError } = require('../../config/logging');
-const { validationId, pagination } = require('./general');
+const { validationId, pagination, isRequired } = require('./general');
 
 const NAMESPACE = 'QUARTIER_VALIDATION';
 const Model = Quartier;
 
 const nomInParams = {
   in: ['params'],
-  notEmpty: true,
-  errorMessage: 'Ce champ est obligatoire',
+  ...isRequired,
 };
 
 const nomInBody = {
   in: ['body'],
-  notEmpty: true,
+  ...isRequired,
   trim: true,
-  errorMessage: 'Ce champ est obligatoire',
   custom: {
     options: async (value) => {
       const nom = value || '';
@@ -32,26 +30,7 @@ const nomInBody = {
 
 const communeId = {
   in: ['body'],
-  notEmpty: true,
-  errorMessage: 'Ce champ est obligatoire',
-  custom: {
-    options: async (value) => {
-      if (!value) return;
-      if (!isUUID(value, 4)) return Promise.reject('Doit être une UUID');
-      try {
-        const data = await Commune.findByPk(value);
-        if (!data) {
-          return Promise.reject('Cette commune n\'existe pas');
-        }
-      } catch (e) {
-        loggingError(NAMESPACE, e.message, e);
-      }
-    }
-  },
-};
-
-const communeIdIfExist = {
-  in: ['body'],
+  ...isRequired,
   custom: {
     options: async (value) => {
       if (!value) return;
@@ -77,9 +56,12 @@ module.exports = {
     id: validationId(Model, NAMESPACE),
     nom: {
       ...nomInBody,
-      notEmpty: false,
+      optional: true,
     },
-    communeId: communeIdIfExist
+    communeId: {
+      ...communeId,
+      optional: true,
+    }
   },
   getOne: {
     id: validationId(Model, NAMESPACE),

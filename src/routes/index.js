@@ -6,6 +6,8 @@ const routerArrondissement= require('./arrondissements');
 const routerCommunes = require('./communes');
 const routerQuartiers = require('./quartiers');
 const routerAssurances = require('./assurances');
+const routerPharmacies = require('./pharmacies');
+const routerPeriodesGardes = require('./periodesGardes');
 
 const generateRoutes = (app) => {
   app.use('/auth', routerAuth);
@@ -16,6 +18,8 @@ const generateRoutes = (app) => {
   app.use('/communes', routerCommunes);
   app.use('/quartiers', routerQuartiers);
   app.use('/assurances', routerAssurances);
+  app.use('/pharmacies', routerPharmacies);
+  app.use('/periodes-gardes', routerPeriodesGardes);
 };
 
 module.exports = {
