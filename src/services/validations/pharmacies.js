@@ -30,7 +30,6 @@ const nomInBody = {
 
 const quartierId = {
   in: ['body'],
-  ...isRequired,
   custom: {
     options: async (value) => {
       if (!value) return;
