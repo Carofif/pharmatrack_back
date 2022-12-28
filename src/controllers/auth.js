@@ -11,10 +11,10 @@ const login = (req, res) => {
       id: user.id,
       role: user.role
     });
+    delete user.dataValues.motDePasse;
     return res.status(200).send({
       token,
-      id: user.id,
-      role: user.role,
+      ...user,
     });
   } catch (error) {
     return res.status(400).send({
