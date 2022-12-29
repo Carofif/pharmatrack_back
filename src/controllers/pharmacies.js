@@ -52,7 +52,7 @@ const getAll = async (req, res) => {
     const { count, rows } = await Model.findAndCountAll(payload);
     const data = rows.map(r => ({
       ...r.dataValues,
-      distance: Math.sqrt(Math.pow(latitude - r.dataValues.latitude, 2) + Math.pow(longitude - r.dataValues.longitude, 2)) * 1.852 * 60,
+      distance: (Math.sqrt(Math.pow(latitude - r.dataValues.latitude, 2) + Math.pow(longitude - r.dataValues.longitude, 2)) * 1.852 * 60).toFixed(2),
     }));
     data.sort((a, b) => a.distance - b.distance);
     return res.status(200).json({ data, count });
