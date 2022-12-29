@@ -109,6 +109,19 @@ const heureFermeture = {
   },
 };
 
+const dateDeGarde = {
+  in: ['query'],
+  ...isRequired,
+  trim: true,
+  isDate: {
+    errorMessage: 'Le champ "dateDeGarde" doit être une date',
+  },
+  isISO8601: {
+    errorMessage: 'Le champ "dateDeGarde" doit être une date au format ISO8601',
+    options: { strict: true, strictSeparator: true },
+  },
+};
+
 module.exports = {
   create: {
     nom: nomInBody,
@@ -168,6 +181,11 @@ module.exports = {
     ...pagination(),
     quartierId: {
       ...quartierId,
+      in: ['query'],
+      optional: true,
+    },
+    dateDeGarde: {
+      ...dateDeGarde,
       in: ['query'],
       optional: true,
     },

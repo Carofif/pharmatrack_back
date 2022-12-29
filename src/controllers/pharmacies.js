@@ -1,7 +1,7 @@
 
 const { Op } = require('sequelize');
 const { error: loggingError } = require('../config/logging');
-const { Pharmacie, PeriodeGarde, Quartier } = require('../sequelize/models');
+const { Pharmacie, PeriodeGarde, Quartier, Garde } = require('../sequelize/models');
 
 const NAMESPACE = 'PHARMACIE_CONTROLLER';
 const Model = Pharmacie;
@@ -12,7 +12,7 @@ const Model = Pharmacie;
  * @param {Response} res
  */
 const getAll = async (req, res) => {
-  const { page, limit, nom, quartierId, longitude, latitude, rayon, ouvertToutTemps } = req.query;
+  const { page, limit, nom, quartierId, longitude, latitude, rayon, ouvertToutTemps, dateDeGarde } = req.query;
   const coordonnesGPS = {
     latitudeMin: latitude - rayon / 1.852 / 60,
     latitudeMax: latitude + rayon / 1.852 / 60,
@@ -33,6 +33,16 @@ const getAll = async (req, res) => {
     },
     order: [['nom', 'ASC']],
   };
+  if (dateDeGarde) {
+    payload.include = [{
+      model: PeriodeGarde,
+      as: 'periodeGardes',
+      where: {
+        dateDebut: { [Op.lte]: dateDeGarde },
+        dateFin: { [Op.gte]: dateDeGarde }
+      }
+    }];
+  }
   if (limit) payload.limit = limit;
   if (page) payload.offset = (page - 1) * (payload?.limit || 10);
 
@@ -40,6 +50,9 @@ const getAll = async (req, res) => {
   if (ouvertToutTemps !== undefined) payload.where.ouvertToutTemps = { [Op.is]: ouvertToutTemps };
   try {
     const { count, rows } = await Model.findAndCountAll(payload);
+    // rows.sort((a, b) => {
+    //   const distanceA =
+    // });
     return res.status(200).json({ data: rows, count });
   } catch (error) {
     const message = 'Erreur lors de la récupération des pharmacies';
@@ -148,6 +161,14 @@ const update = async (req, res) => {
     let msg = 'Aucun modification effectué';
     if (count > 0) {
       await model.save();
+      msg = 'Modification effectué avec succès';
+    }
+    if (req.body.periodeGardeId) {
+      const where = {
+        pharmacieId: model.id,
+        periodeGardeId: req.body.periodeGardeId,
+      };
+      await Garde.findOrCreate({where, defaults: where});
       msg = 'Modification effectué avec succès';
     }
     return res.status(200).send({data: model, msg});

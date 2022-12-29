@@ -141,8 +141,7 @@ const update = async (req, res) => {
         periodeGardeId: model.id,
         pharmacieId: req.body.pharmacieId,
       };
-      const link = await Garde.findOne({where});
-      if (!link) await Garde.create(where);
+      await Garde.findOrCreate({where, defaults: where});
       msg = 'Modification effectué avec succès';
     }
     return res.status(200).send({data: model, msg});
