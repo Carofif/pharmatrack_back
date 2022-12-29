@@ -31,5 +31,8 @@
   "devDependencies": {
     "eslint": "^8.28.0",
     "sequelize-cli": "^6.5.2"
+  },
+  "engines": {
+    "node": "14.x"
   }
 }
