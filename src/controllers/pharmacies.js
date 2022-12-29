@@ -50,10 +50,12 @@ const getAll = async (req, res) => {
   if (ouvertToutTemps !== undefined) payload.where.ouvertToutTemps = { [Op.is]: ouvertToutTemps };
   try {
     const { count, rows } = await Model.findAndCountAll(payload);
-    // rows.sort((a, b) => {
-    //   const distanceA =
-    // });
-    return res.status(200).json({ data: rows, count });
+    const data = rows.map(r => ({
+      ...r.dataValues,
+      distance: Math.sqrt(Math.pow(latitude - r.dataValues.latitude, 2) + Math.pow(longitude - r.dataValues.longitude, 2)) * 1.852 * 60,
+    }));
+    data.sort((a, b) => a.distance - b.distance);
+    return res.status(200).json({ data, count });
   } catch (error) {
     const message = 'Erreur lors de la récupération des pharmacies';
     loggingError(NAMESPACE, message, error);
